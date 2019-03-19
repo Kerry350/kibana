@@ -51,7 +51,7 @@ export class WaffleNodeTypeSwitcherClass extends React.PureComponent<Props> {
         options={nodeOptions}
         idSelected={this.props.nodeType}
         onChange={this.handleClick}
-        buttonSize="m"
+        buttonSize="l"
       />
     );
   }
