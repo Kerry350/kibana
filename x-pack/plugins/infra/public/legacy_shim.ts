@@ -9,9 +9,9 @@
 // actually mount and run our application. Once in the NP this won't be an issue
 // as the NP will look for an export named "plugin" and run that from the index file.
 
-import { npStart } from 'ui/new_platform';
+// import { npStart } from 'ui/new_platform';
 import { PluginInitializerContext } from 'kibana/public';
-import chrome from 'ui/chrome';
+// import chrome from 'ui/chrome';
 import { plugin } from './new_platform_index';
 
 const ROOT_ELEMENT_ID = 'react-infra-root';
