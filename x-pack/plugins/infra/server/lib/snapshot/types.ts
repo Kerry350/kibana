@@ -5,22 +5,12 @@
  */
 
 import { JsonObject } from '../../../common/typed_json';
-import {
-  InfraNodeType,
-  InfraSourceConfiguration,
-  InfraTimerangeInput,
-  InfraSnapshotGroupbyInput,
-  InfraSnapshotMetricInput,
-  // eslint-disable-next-line @kbn/eslint/no-restricted-paths
-} from '../../../public/graphql/types';
+// eslint-disable-next-line @kbn/eslint/no-restricted-paths
+import { InfraSourceConfiguration } from '../../../public/graphql/types';
+import { SnapshotRequest } from '../../../common/http_api/snapshot_api';
 
-export interface InfraSnapshotRequestOptions {
-  nodeType: InfraNodeType;
+export interface InfraSnapshotRequestOptions
+  extends Omit<SnapshotRequest, 'sourceId' | 'filterQuery'> {
   sourceConfiguration: InfraSourceConfiguration;
-  timerange: InfraTimerangeInput;
-  groupBy: InfraSnapshotGroupbyInput[];
-  metric: InfraSnapshotMetricInput;
   filterQuery: JsonObject | undefined;
-  accountId?: string;
-  region?: string;
 }
