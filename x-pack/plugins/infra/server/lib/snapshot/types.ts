@@ -11,6 +11,7 @@ import {
   InfraTimerangeInput,
   InfraSnapshotGroupbyInput,
   InfraSnapshotMetricInput,
+  // eslint-disable-next-line @kbn/eslint/no-restricted-paths
 } from '../../../public/graphql/types';
 
 export interface InfraSnapshotRequestOptions {

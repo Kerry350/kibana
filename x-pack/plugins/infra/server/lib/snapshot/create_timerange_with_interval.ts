@@ -7,6 +7,7 @@
 import { uniq } from 'lodash';
 import { RequestHandlerContext } from 'kibana/server';
 import { InfraSnapshotRequestOptions } from './types';
+// eslint-disable-next-line @kbn/eslint/no-restricted-paths
 import { InfraTimerangeInput } from '../../../public/graphql/types';
 import { getMetricsAggregations } from './query_helpers';
 import { calculateMetricInterval } from '../../utils/calculate_metric_interval';

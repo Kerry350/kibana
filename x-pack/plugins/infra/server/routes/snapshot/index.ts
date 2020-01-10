@@ -11,6 +11,7 @@ import { identity } from 'fp-ts/lib/function';
 import { InfraBackendLibs } from '../../lib/infra_types';
 import { UsageCollector } from '../../usage/usage_collector';
 import { parseFilterQuery } from '../../utils/serialized_query';
+// eslint-disable-next-line @kbn/eslint/no-restricted-paths
 import { InfraNodeType, InfraSnapshotMetricInput } from '../../../public/graphql/types';
 import { SnapshotRequestRT, SnapshotNodeResponseRT } from '../../../common/http_api/snapshot_api';
 import { throwErrors } from '../../../common/runtime_types';
