@@ -43,6 +43,7 @@ import {
   createTopLogEntryCategoriesQuery,
   topLogEntryCategoriesResponseRT,
 } from './queries/top_log_entry_categories';
+import { fetchMlJob } from './common';
 
 const COMPOSITE_AGGREGATION_BATCH_SIZE = 1000;
 
@@ -210,7 +211,7 @@ export async function getLogEntryCategoryExamples(
   const {
     mlJob,
     timing: { spans: fetchMlJobSpans },
-  } = await fetchMlJob(context, logEntryCategoriesCountJobId);
+  } = await fetchMlJob(context.infra.mlAnomalyDetectors, logEntryCategoriesCountJobId);
 
   const customSettings = decodeOrThrow(jobCustomSettingsRT)(mlJob.custom_settings);
   const indices = customSettings?.logs_source_config?.indexPattern;
@@ -443,30 +444,6 @@ async function fetchTopLogEntryCategoryHistograms(
     categoryHistogramsById,
     timing: {
       spans: [esSearchSpan],
-    },
-  };
-}
-
-async function fetchMlJob(
-  context: { infra: { mlAnomalyDetectors: MlAnomalyDetectors } },
-  logEntryCategoriesCountJobId: string
-) {
-  const finalizeMlGetJobSpan = startTracingSpan('Fetch ml job from ES');
-
-  const {
-    jobs: [mlJob],
-  } = await context.infra.mlAnomalyDetectors.jobs(logEntryCategoriesCountJobId);
-
-  const mlGetJobSpan = finalizeMlGetJobSpan();
-
-  if (mlJob == null) {
-    throw new NoLogAnalysisMlJobError(`Failed to find ml job ${logEntryCategoriesCountJobId}.`);
-  }
-
-  return {
-    mlJob,
-    timing: {
-      spans: [mlGetJobSpan],
     },
   };
 }

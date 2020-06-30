@@ -24,13 +24,13 @@ import {
 } from './queries/log_entry_rate_examples';
 import {
   InsufficientLogAnalysisMlJobConfigurationError,
-  NoLogAnalysisMlJobError,
   NoLogAnalysisResultsIndexError,
 } from './errors';
 import { InfraSource } from '../sources';
 import type { MlSystem } from '../../types';
 import { InfraRequestHandlerContext } from '../../types';
 import { KibanaFramework } from '../adapters/framework/kibana_framework_adapter';
+import { fetchMlJob } from './common';
 
 const COMPOSITE_AGGREGATION_BATCH_SIZE = 1000;
 
@@ -163,7 +163,7 @@ export async function getLogEntryRateExamples(
   const {
     mlJob,
     timing: { spans: fetchMlJobSpans },
-  } = await fetchMlJob(context, jobId);
+  } = await fetchMlJob(context.infra.mlAnomalyDetectors, jobId);
 
   const customSettings = decodeOrThrow(jobCustomSettingsRT)(mlJob.custom_settings);
   const indices = customSettings?.logs_source_config?.indexPattern;
@@ -244,29 +244,6 @@ export async function fetchLogEntryRateExamples(
     })),
     timing: {
       spans: [esSearchSpan],
-    },
-  };
-}
-
-async function fetchMlJob(
-  context: RequestHandlerContext & { infra: Required<InfraRequestHandlerContext> },
-  logEntryRateJobId: string
-) {
-  const finalizeMlGetJobSpan = startTracingSpan('Fetch ml job from ES');
-  const {
-    jobs: [mlJob],
-  } = await context.infra.mlAnomalyDetectors.jobs(logEntryRateJobId);
-
-  const mlGetJobSpan = finalizeMlGetJobSpan();
-
-  if (mlJob == null) {
-    throw new NoLogAnalysisMlJobError(`Failed to find ml job ${logEntryRateJobId}.`);
-  }
-
-  return {
-    mlJob,
-    timing: {
-      spans: [mlGetJobSpan],
     },
   };
 }
