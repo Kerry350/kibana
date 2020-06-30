@@ -13,6 +13,8 @@ import {
   jobCustomSettingsRT,
   logEntryCategoriesJobTypes,
 } from '../../../common/log_analysis';
+import type { MlSystem } from '../../types';
+import { createLogEntryAnomaliesQuery } from './queries';
 
 export async function getLogEntryAnomalies(
   context: RequestHandlerContext & { infra: Required<InfraRequestHandlerContext> },
@@ -39,6 +41,15 @@ export async function getLogEntryAnomalies(
     timing: { spans: fetchLogCategoriesMlJobSpans },
   } = await fetchMlJob(context.infra.mlAnomalyDetectors, logCategoriesJobId);
 
+  const jobIds: string[] = [
+    ...(logRateJob ? [logRateJobId] : []),
+    ...(logCategoriesJob ? [logCategoriesJobId] : []),
+  ];
+  const {
+    anomalies,
+    timing: { spans: fetchLogEntryAnomaliesSpans },
+  } = fetchLogEntryAnomalies(context.infra.mlSystem, jobIds, startTime, endTime);
+
   const logEntryAnomaliesSpan = finalizeLogEntryAnomaliesSpan();
 
   return {
@@ -52,4 +63,19 @@ export async function getLogEntryAnomalies(
       ],
     },
   };
+}
+
+async function fetchLogEntryAnomalies(
+  mlSystem: MlSystem,
+  jobIds: string[],
+  startTime: number,
+  endTime: number
+) {
+  const finalizeFetchLogEntryAnomaliesSpan = startTracingSpan('fetch log entry anomalies');
+
+  const results = decodeOrThrow(logEntryAnomaliesResponseRT)(
+    await mlSystem.mlAnomalySearch(createLogEntryAnomaliesQuery(jobIds, startTime, endTime))
+  );
+
+  const fetchLogEntryAnomaliesSpan = finalizeFetchLogEntryAnomaliesSpan();
 }
