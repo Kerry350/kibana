@@ -10,7 +10,6 @@ import {
   LOG_ANALYSIS_GET_LOG_ENTRY_ANOMALIES_PATH,
   getLogEntryAnomaliesSuccessReponsePayloadRT,
   getLogEntryAnomaliesRequestPayloadRT,
-  GetLogEntryAnomaliesSuccessResponsePayload,
 } from '../../../../common/http_api/log_analysis';
 import { createValidationFunction } from '../../../../common/runtime_types';
 import { assertHasInfraMlPlugins } from '../../../utils/request_context';
@@ -27,17 +26,20 @@ export const initGetLogEntryAnomaliesRoute = ({ framework }: InfraBackendLibs) =
     },
     framework.router.handleLegacyErrors(async (requestContext, request, response) => {
       const {
-        data: { sourceId, timeRange },
+        data: {
+          sourceId,
+          timeRange: { startTime, endTime },
+        },
       } = request.body;
 
       try {
         assertHasInfraMlPlugins(requestContext);
 
-        const logEntryAnomalies = await getLogEntryAnomalies(
+        const { data: logEntryAnomalies, timing } = await getLogEntryAnomalies(
           requestContext,
           sourceId,
-          timeRange.startTime,
-          timeRange.endTime
+          startTime,
+          endTime
         );
 
         return response.ok({
@@ -45,6 +47,7 @@ export const initGetLogEntryAnomaliesRoute = ({ framework }: InfraBackendLibs) =
             data: {
               anomalies: logEntryAnomalies,
             },
+            timing,
           }),
         });
       } catch (error) {

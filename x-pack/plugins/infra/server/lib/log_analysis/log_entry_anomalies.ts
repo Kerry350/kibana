@@ -8,11 +8,7 @@ import { RequestHandlerContext } from 'src/core/server';
 import { InfraRequestHandlerContext } from '../../types';
 import { startTracingSpan } from '../../../common/performance_tracing';
 import { fetchMlJob } from './common';
-import {
-  getJobId,
-  jobCustomSettingsRT,
-  logEntryCategoriesJobTypes,
-} from '../../../common/log_analysis';
+import { getJobId, logEntryCategoriesJobTypes } from '../../../common/log_analysis';
 import type { MlSystem } from '../../types';
 import { createLogEntryAnomaliesQuery, logEntryAnomaliesResponseRT } from './queries';
 import { decodeOrThrow } from '../../../common/runtime_types';
@@ -49,12 +45,25 @@ export async function getLogEntryAnomalies(
   const {
     anomalies,
     timing: { spans: fetchLogEntryAnomaliesSpans },
-  } = fetchLogEntryAnomalies(context.infra.mlSystem, jobIds, startTime, endTime);
+  } = await fetchLogEntryAnomalies(context.infra.mlSystem, jobIds, startTime, endTime);
+
+  const data = anomalies.map((anomaly) => {
+    const { id, anomalyScore, dataset, typical, actual, jobId } = anomaly;
+
+    return {
+      id,
+      anomalyScore,
+      dataset,
+      typical,
+      actual,
+      type: jobId === logRateJobId ? ('logRate' as const) : ('logCategory' as const),
+    };
+  });
 
   const logEntryAnomaliesSpan = finalizeLogEntryAnomaliesSpan();
 
   return {
-    data: anomalies,
+    data,
     timing: {
       spans: [
         logEntryAnomaliesSpan,
@@ -73,7 +82,10 @@ async function fetchLogEntryAnomalies(
   endTime: number
 ) {
   if (jobIds.length === 0) {
-    return [];
+    return {
+      anomalies: [],
+      timing: { spans: [] },
+    };
   }
 
   const finalizeFetchLogEntryAnomaliesSpan = startTracingSpan('fetch log entry anomalies');
@@ -82,10 +94,29 @@ async function fetchLogEntryAnomalies(
     await mlSystem.mlAnomalySearch(createLogEntryAnomaliesQuery(jobIds, startTime, endTime))
   );
 
+  const anomalies = results.hits.hits.map((result) => {
+    const {
+      job_id,
+      record_score: anomalyScore,
+      typical,
+      actual,
+      partition_field_value: dataset,
+    } = result._source;
+
+    return {
+      id: result._id,
+      anomalyScore,
+      dataset,
+      typical: typical[0],
+      actual: actual[0],
+      jobId: job_id,
+    };
+  });
+
   const fetchLogEntryAnomaliesSpan = finalizeFetchLogEntryAnomaliesSpan();
 
   return {
-    anomalies: results,
+    anomalies,
     timing: {
       spans: [fetchLogEntryAnomaliesSpan],
     },

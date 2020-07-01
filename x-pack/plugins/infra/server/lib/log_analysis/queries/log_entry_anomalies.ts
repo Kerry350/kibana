@@ -32,13 +32,14 @@ export const createLogEntryAnomaliesQuery = (
       },
     },
   },
-  _source: ['record_score', 'typical', 'actual', 'partition_field_value'],
+  _source: ['job_id', 'record_score', 'typical', 'actual', 'partition_field_value'],
   size: ANOMALIES_RESULTS_COUNT,
 });
 
 export const logEntryAnomalyHitRT = rt.type({
   _id: rt.string,
-  _source: rt.partial({
+  _source: rt.type({
+    job_id: rt.string,
     record_score: rt.number,
     typical: rt.array(rt.number),
     actual: rt.array(rt.number),

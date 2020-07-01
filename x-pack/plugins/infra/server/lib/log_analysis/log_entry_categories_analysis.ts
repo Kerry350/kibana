@@ -16,7 +16,6 @@ import { decodeOrThrow } from '../../../common/runtime_types';
 import type { MlAnomalyDetectors, MlSystem } from '../../types';
 import {
   InsufficientLogAnalysisMlJobConfigurationError,
-  NoLogAnalysisMlJobError,
   NoLogAnalysisResultsIndexError,
   UnknownCategoryError,
 } from './errors';

@@ -29,6 +29,7 @@ import { AnomaliesResults } from './sections/anomalies';
 import { LogRateResults } from './sections/log_rate';
 import { useLogEntryRateModuleContext } from './use_log_entry_rate_module';
 import { useLogEntryRateResults } from './use_log_entry_rate_results';
+import { useLogEntryAnomaliesResults } from './use_log_entry_anomalies_results';
 import {
   StringTimeRange,
   useLogAnalysisResultsUrlState,
@@ -80,6 +81,16 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     startTime: queryTimeRange.value.startTime,
     endTime: queryTimeRange.value.endTime,
     bucketDuration,
+  });
+
+  const {
+    getLogEntryAnomalies,
+    isLoadingLogEntryAnomalies,
+    logEntryAnomalies,
+  } = useLogEntryAnomaliesResults({
+    sourceId,
+    startTime: queryTimeRange.value.startTime,
+    endTime: queryTimeRange.value.endTime,
   });
 
   const handleQueryTimeRangeChange = useCallback(
@@ -139,7 +150,8 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
 
   useEffect(() => {
     getLogEntryRate();
-  }, [getLogEntryRate, queryTimeRange.lastChangedTime]);
+    getLogEntryAnomalies();
+  }, [getLogEntryRate, getLogEntryAnomalies, queryTimeRange.lastChangedTime]);
 
   useEffect(() => {
     fetchModuleDefinition();
