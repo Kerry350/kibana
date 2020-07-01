@@ -14,7 +14,8 @@ import {
   logEntryCategoriesJobTypes,
 } from '../../../common/log_analysis';
 import type { MlSystem } from '../../types';
-import { createLogEntryAnomaliesQuery } from './queries';
+import { createLogEntryAnomaliesQuery, logEntryAnomaliesResponseRT } from './queries';
+import { decodeOrThrow } from '../../../common/runtime_types';
 
 export async function getLogEntryAnomalies(
   context: RequestHandlerContext & { infra: Required<InfraRequestHandlerContext> },
@@ -71,6 +72,10 @@ async function fetchLogEntryAnomalies(
   startTime: number,
   endTime: number
 ) {
+  if (jobIds.length === 0) {
+    return [];
+  }
+
   const finalizeFetchLogEntryAnomaliesSpan = startTracingSpan('fetch log entry anomalies');
 
   const results = decodeOrThrow(logEntryAnomaliesResponseRT)(
@@ -78,4 +83,11 @@ async function fetchLogEntryAnomalies(
   );
 
   const fetchLogEntryAnomaliesSpan = finalizeFetchLogEntryAnomaliesSpan();
+
+  return {
+    anomalies: results,
+    timing: {
+      spans: [fetchLogEntryAnomaliesSpan],
+    },
+  };
 }

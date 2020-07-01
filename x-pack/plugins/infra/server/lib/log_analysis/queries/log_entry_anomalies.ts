@@ -6,12 +6,16 @@
 
 import * as rt from 'io-ts';
 import { commonSearchSuccessResponseFieldsRT } from '../../../utils/elasticsearch_runtime_types';
-import { createJobIdFilters, defaultRequestParameters } from './common';
+import {
+  createJobIdFilters,
+  createTimeRangeFilters,
+  createResultTypeFilters,
+  defaultRequestParameters,
+} from './common';
 
-const ANOMALIES_RESULTS_COUNT = 1000;
+const ANOMALIES_RESULTS_COUNT = 500;
 
 export const createLogEntryAnomaliesQuery = (
-  mlSystem: string,
   jobIds: string[],
   startTime: number,
   endTime: number
@@ -20,9 +24,37 @@ export const createLogEntryAnomaliesQuery = (
   body: {
     query: {
       bool: {
-        filter: [...createJobIdFilters(jobIds)],
+        filter: [
+          ...createJobIdFilters(jobIds),
+          ...createTimeRangeFilters(startTime, endTime),
+          ...createResultTypeFilters(['record']),
+        ],
       },
     },
   },
+  _source: ['record_score', 'typical', 'actual', 'partition_field_value'],
   size: ANOMALIES_RESULTS_COUNT,
 });
+
+export const logEntryAnomalyHitRT = rt.type({
+  _id: rt.string,
+  _source: rt.partial({
+    record_score: rt.number,
+    typical: rt.array(rt.number),
+    actual: rt.array(rt.number),
+    partition_field_value: rt.string,
+  }),
+});
+
+export type LogEntryAnomalyHit = rt.TypeOf<typeof logEntryAnomalyHitRT>;
+
+export const logEntryAnomaliesResponseRT = rt.intersection([
+  commonSearchSuccessResponseFieldsRT,
+  rt.type({
+    hits: rt.type({
+      hits: rt.array(logEntryAnomalyHitRT),
+    }),
+  }),
+]);
+
+export type LogEntryAnomaliesResponseRT = rt.TypeOf<typeof logEntryAnomaliesResponseRT>;
