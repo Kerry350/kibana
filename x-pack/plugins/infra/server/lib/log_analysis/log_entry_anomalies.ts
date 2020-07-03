@@ -6,9 +6,10 @@
 
 import { RequestHandlerContext } from 'src/core/server';
 import { InfraRequestHandlerContext } from '../../types';
-import { startTracingSpan } from '../../../common/performance_tracing';
+import { TracingSpan, startTracingSpan } from '../../../common/performance_tracing';
 import { fetchMlJob } from './common';
 import { getJobId, logEntryCategoriesJobTypes } from '../../../common/log_analysis';
+import { Sort, Pagination } from '../../../common/http_api/log_analysis';
 import type { MlSystem } from '../../types';
 import { createLogEntryAnomaliesQuery, logEntryAnomaliesResponseRT } from './queries';
 import { decodeOrThrow } from '../../../common/runtime_types';
@@ -17,7 +18,9 @@ export async function getLogEntryAnomalies(
   context: RequestHandlerContext & { infra: Required<InfraRequestHandlerContext> },
   sourceId: string,
   startTime: number,
-  endTime: number
+  endTime: number,
+  sort: Sort,
+  pagination: Pagination
 ) {
   const finalizeLogEntryAnomaliesSpan = startTracingSpan('get log entry anomalies');
 
@@ -28,24 +31,41 @@ export async function getLogEntryAnomalies(
     logEntryCategoriesJobTypes[0]
   );
 
-  const {
-    mlJob: logRateJob,
-    timing: { spans: fetchLogRateMlJobSpans },
-  } = await fetchMlJob(context.infra.mlAnomalyDetectors, logRateJobId);
+  const jobIds: string[] = [];
+  let jobSpans: TracingSpan[] = [];
 
-  const {
-    mlJob: logCategoriesJob,
-    timing: { spans: fetchLogCategoriesMlJobSpans },
-  } = await fetchMlJob(context.infra.mlAnomalyDetectors, logCategoriesJobId);
+  try {
+    const {
+      timing: { spans },
+    } = await fetchMlJob(context.infra.mlAnomalyDetectors, logRateJobId);
+    jobIds.push(logRateJobId);
+    jobSpans = [...jobSpans, ...spans];
+  } catch (e) {
+    // Job wasn't found
+  }
 
-  const jobIds: string[] = [
-    ...(logRateJob ? [logRateJobId] : []),
-    ...(logCategoriesJob ? [logCategoriesJobId] : []),
-  ];
+  try {
+    const {
+      timing: { spans },
+    } = await fetchMlJob(context.infra.mlAnomalyDetectors, logCategoriesJobId);
+    jobIds.push(logCategoriesJobId);
+    jobSpans = [...jobSpans, ...spans];
+  } catch (e) {
+    // Job wasn't found
+  }
+
   const {
     anomalies,
+    paginationCursor,
     timing: { spans: fetchLogEntryAnomaliesSpans },
-  } = await fetchLogEntryAnomalies(context.infra.mlSystem, jobIds, startTime, endTime);
+  } = await fetchLogEntryAnomalies(
+    context.infra.mlSystem,
+    jobIds,
+    startTime,
+    endTime,
+    sort,
+    pagination
+  );
 
   const data = anomalies.map((anomaly) => {
     const { id, anomalyScore, dataset, typical, actual, jobId } = anomaly;
@@ -64,13 +84,9 @@ export async function getLogEntryAnomalies(
 
   return {
     data,
+    paginationCursor,
     timing: {
-      spans: [
-        logEntryAnomaliesSpan,
-        ...fetchLogRateMlJobSpans,
-        ...fetchLogCategoriesMlJobSpans,
-        ...fetchLogEntryAnomaliesSpans,
-      ],
+      spans: [logEntryAnomaliesSpan, ...jobSpans, ...fetchLogEntryAnomaliesSpans],
     },
   };
 }
@@ -79,7 +95,9 @@ async function fetchLogEntryAnomalies(
   mlSystem: MlSystem,
   jobIds: string[],
   startTime: number,
-  endTime: number
+  endTime: number,
+  sort: Sort,
+  pagination: Pagination
 ) {
   if (jobIds.length === 0) {
     return {
@@ -91,8 +109,13 @@ async function fetchLogEntryAnomalies(
   const finalizeFetchLogEntryAnomaliesSpan = startTracingSpan('fetch log entry anomalies');
 
   const results = decodeOrThrow(logEntryAnomaliesResponseRT)(
-    await mlSystem.mlAnomalySearch(createLogEntryAnomaliesQuery(jobIds, startTime, endTime))
+    await mlSystem.mlAnomalySearch(
+      createLogEntryAnomaliesQuery(jobIds, startTime, endTime, sort, pagination)
+    )
   );
+
+  const paginationCursor =
+    results.hits.hits.length > 0 ? results.hits.hits[results.hits.hits.length - 1].sort : undefined;
 
   const anomalies = results.hits.hits.map((result) => {
     const {
@@ -117,6 +140,7 @@ async function fetchLogEntryAnomalies(
 
   return {
     anomalies,
+    paginationCursor,
     timing: {
       spans: [fetchLogEntryAnomaliesSpan],
     },

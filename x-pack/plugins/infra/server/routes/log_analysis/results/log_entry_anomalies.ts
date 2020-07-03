@@ -10,6 +10,9 @@ import {
   LOG_ANALYSIS_GET_LOG_ENTRY_ANOMALIES_PATH,
   getLogEntryAnomaliesSuccessReponsePayloadRT,
   getLogEntryAnomaliesRequestPayloadRT,
+  GetLogEntryAnomaliesRequestPayload,
+  Sort,
+  Pagination,
 } from '../../../../common/http_api/log_analysis';
 import { createValidationFunction } from '../../../../common/runtime_types';
 import { assertHasInfraMlPlugins } from '../../../utils/request_context';
@@ -29,23 +32,30 @@ export const initGetLogEntryAnomaliesRoute = ({ framework }: InfraBackendLibs) =
         data: {
           sourceId,
           timeRange: { startTime, endTime },
+          sort: sortParam,
+          pagination: paginationParam,
         },
       } = request.body;
+
+      const { sort, pagination } = getSortAndPagination(sortParam, paginationParam);
 
       try {
         assertHasInfraMlPlugins(requestContext);
 
-        const { data: logEntryAnomalies, timing } = await getLogEntryAnomalies(
+        const { data: logEntryAnomalies, paginationCursor, timing } = await getLogEntryAnomalies(
           requestContext,
           sourceId,
           startTime,
-          endTime
+          endTime,
+          sort,
+          pagination
         );
 
         return response.ok({
           body: getLogEntryAnomaliesSuccessReponsePayloadRT.encode({
             data: {
               anomalies: logEntryAnomalies,
+              paginationCursor,
             },
             timing,
           }),
@@ -64,4 +74,36 @@ export const initGetLogEntryAnomaliesRoute = ({ framework }: InfraBackendLibs) =
       }
     })
   );
+};
+
+const getSortAndPagination = (
+  sortParam: GetLogEntryAnomaliesRequestPayload['data']['sort'],
+  paginationParam: GetLogEntryAnomaliesRequestPayload['data']['pagination']
+): {
+  sort: Sort;
+  pagination: Pagination;
+} => {
+  const sort = sortParam ?? {};
+  const pagination = paginationParam ?? {};
+
+  const sortDefaults = {
+    field: 'anomalyScore' as const,
+    direction: 'desc' as const,
+  };
+
+  const sortWithDefaults = {
+    ...sortDefaults,
+    ...sort,
+  };
+
+  const paginationDefaults = {
+    pageSize: 50,
+  };
+
+  const paginationWithDefaults = {
+    ...paginationDefaults,
+    ...pagination,
+  };
+
+  return { sort: sortWithDefaults, pagination: paginationWithDefaults };
 };
