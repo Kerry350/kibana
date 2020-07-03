@@ -45,14 +45,14 @@ const MENU_LABEL = i18n.translate('xpack.infra.logAnomalies.logEntryExamplesMenu
 });
 
 const VIEW_IN_STREAM_LABEL = i18n.translate(
-  'xpack.infra.logAnomalies.logEntryExamplesViewInStreamLabel',
+  'xpack.infra.logs.analysis.logEntryExamplesViewInStreamLabel',
   {
     defaultMessage: 'View in stream',
   }
 );
 
 const VIEW_ANOMALY_IN_ML_LABEL = i18n.translate(
-  'xpack.infra.logAnomalies.logEntryExamplesViewAnomalyInMlLabel',
+  'xpack.infra.logs.analysis.logEntryExamplesViewAnomalyInMlLabel',
   {
     defaultMessage: 'View anomaly in machine learning',
   }
@@ -121,13 +121,15 @@ export const LogEntryRateExampleMessage: React.FunctionComponent<Props> = ({
       {
         label: VIEW_IN_STREAM_LABEL,
         onClick: viewInStreamLinkProps.onClick,
+        href: viewInStreamLinkProps.href,
       },
       {
         label: VIEW_ANOMALY_IN_ML_LABEL,
         onClick: viewAnomalyInMachineLearningLinkProps.onClick,
+        href: viewAnomalyInMachineLearningLinkProps.href,
       },
     ];
-  }, [viewInStreamLinkProps.onClick, viewAnomalyInMachineLearningLinkProps.onClick]);
+  }, [viewInStreamLinkProps, viewAnomalyInMachineLearningLinkProps]);
 
   return (
     <LogEntryRowWrapper
@@ -236,39 +238,48 @@ export const LogEntryRateExampleMessageHeaders: React.FunctionComponent<{
 }> = ({ dateTime }) => {
   return (
     <LogEntryRateExampleMessageHeadersWrapper>
-      {exampleMessageColumnConfigurations.map((columnConfiguration) => {
-        if (isTimestampLogColumnConfiguration(columnConfiguration)) {
-          return (
-            <LogColumnHeader
-              key={columnConfiguration.timestampColumn.id}
-              columnWidth={columnWidths[columnConfiguration.timestampColumn.id]}
-              data-test-subj="logColumnHeader timestampLogColumnHeader"
-            >
-              {localizedDate(dateTime)}
-            </LogColumnHeader>
-          );
-        } else if (isMessageLogColumnConfiguration(columnConfiguration)) {
-          return (
-            <LogColumnHeader
-              columnWidth={columnWidths[columnConfiguration.messageColumn.id]}
-              data-test-subj="logColumnHeader messageLogColumnHeader"
-              key={columnConfiguration.messageColumn.id}
-            >
-              Message
-            </LogColumnHeader>
-          );
-        } else if (isFieldLogColumnConfiguration(columnConfiguration)) {
-          return (
-            <LogColumnHeader
-              columnWidth={columnWidths[columnConfiguration.fieldColumn.id]}
-              data-test-subj="logColumnHeader fieldLogColumnHeader"
-              key={columnConfiguration.fieldColumn.id}
-            >
-              {columnConfiguration.fieldColumn.field}
-            </LogColumnHeader>
-          );
-        }
-      })}
+      <>
+        {exampleMessageColumnConfigurations.map((columnConfiguration) => {
+          if (isTimestampLogColumnConfiguration(columnConfiguration)) {
+            return (
+              <LogColumnHeader
+                key={columnConfiguration.timestampColumn.id}
+                columnWidth={columnWidths[columnConfiguration.timestampColumn.id]}
+                data-test-subj="logColumnHeader timestampLogColumnHeader"
+              >
+                {localizedDate(dateTime)}
+              </LogColumnHeader>
+            );
+          } else if (isMessageLogColumnConfiguration(columnConfiguration)) {
+            return (
+              <LogColumnHeader
+                columnWidth={columnWidths[columnConfiguration.messageColumn.id]}
+                data-test-subj="logColumnHeader messageLogColumnHeader"
+                key={columnConfiguration.messageColumn.id}
+              >
+                Message
+              </LogColumnHeader>
+            );
+          } else if (isFieldLogColumnConfiguration(columnConfiguration)) {
+            return (
+              <LogColumnHeader
+                columnWidth={columnWidths[columnConfiguration.fieldColumn.id]}
+                data-test-subj="logColumnHeader fieldLogColumnHeader"
+                key={columnConfiguration.fieldColumn.id}
+              >
+                {columnConfiguration.fieldColumn.field}
+              </LogColumnHeader>
+            );
+          }
+        })}
+        <LogColumnHeader
+          columnWidth={columnWidths[iconColumnId]}
+          data-test-subj="logColumnHeader contextMenuLogColumnHeader"
+          key={'icon-column-header'}
+        >
+          {null}
+        </LogColumnHeader>
+      </>
     </LogEntryRateExampleMessageHeadersWrapper>
   );
 };
@@ -276,4 +287,5 @@ export const LogEntryRateExampleMessageHeaders: React.FunctionComponent<{
 const LogEntryRateExampleMessageHeadersWrapper = euiStyled(LogColumnHeadersWrapper)`
   border-bottom: none;
   box-shadow: none;
+  padding-right: 0;
 `;

@@ -6,6 +6,7 @@
 
 import { EuiBasicTable, EuiBasicTableColumn } from '@elastic/eui';
 import { RIGHT_ALIGNMENT } from '@elastic/eui/lib/services';
+import moment from 'moment';
 import { i18n } from '@kbn/i18n';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSet } from 'react-use';
@@ -18,6 +19,7 @@ import { RowExpansionButton } from '../../../../../components/basic_table';
 import { LogEntryRateResults } from '../../use_log_entry_rate_results';
 import { AnomaliesTableExpandedRow } from './expanded_row';
 import { AnomalySeverityIndicator } from '../../../../../components/logging/log_analysis_results/anomaly_severity_indicator';
+import { useKibanaUiSetting } from '../../../../../utils/use_kibana_ui_setting';
 
 interface TableItem {
   id: string;
@@ -25,6 +27,7 @@ interface TableItem {
   datasetName: string;
   anomalyScore: number;
   anomalyMessage: string;
+  startTime: number;
 }
 
 interface SortingOptions {
@@ -56,6 +59,13 @@ const anomalyMessageColumnName = i18n.translate(
   }
 );
 
+const anomalyStartTimeColumnName = i18n.translate(
+  'xpack.infra.logs.analysis.anomaliesTableAnomalyStartTime',
+  {
+    defaultMessage: 'Start time',
+  }
+);
+
 const datasetColumnName = i18n.translate(
   'xpack.infra.logs.analysis.anomaliesTableAnomalyDatasetName',
   {
@@ -64,21 +74,23 @@ const datasetColumnName = i18n.translate(
 );
 
 const moreThanExpectedAnomalyMessage = i18n.translate(
-  'xpack.infra.logs.analysis.anomaliesTableLessMoreExpectedAnomalyMessage',
+  'xpack.infra.logs.analysis.anomaliesTableMoreThanExpectedAnomalyMessage',
   {
     defaultMessage: 'More log messages in this dataset than expected',
   }
 );
 
-const lessThanExpectedAnomalyMessage = i18n.translate(
-  'xpack.infra.logs.analysis.anomaliesTableLessThanExpectedAnomalyMessage',
+const fewerThanExpectedAnomalyMessage = i18n.translate(
+  'xpack.infra.logs.analysis.anomaliesTableFewerThanExpectedAnomalyMessage',
   {
-    defaultMessage: 'Less log messages in this dataset than expected',
+    defaultMessage: 'Fewer log messages in this dataset than expected',
   }
 );
 
 const getAnomalyMessage = (actualRate: number, typicalRate: number): string => {
-  return actualRate < typicalRate ? lessThanExpectedAnomalyMessage : moreThanExpectedAnomalyMessage;
+  return actualRate < typicalRate
+    ? fewerThanExpectedAnomalyMessage
+    : moreThanExpectedAnomalyMessage;
 };
 
 export const AnomaliesTable: React.FunctionComponent<{
@@ -87,21 +99,22 @@ export const AnomaliesTable: React.FunctionComponent<{
   timeRange: TimeRange;
   jobId: string;
 }> = ({ results, timeRange, setTimeRange, jobId }) => {
+  const [dateFormat] = useKibanaUiSetting('dateFormat', 'Y-MM-DD HH:mm:ss');
+
   const tableItems: TableItem[] = useMemo(() => {
     return results.anomalies.map((anomaly) => {
       return {
         id: anomaly.id,
-        // The real ID
         dataset: anomaly.partitionId,
-        // Note: EUI's table expanded rows won't work with a key of '' in itemIdToExpandedRowMap, so we have to use the friendly name here
         datasetName: getFriendlyNameForPartitionId(anomaly.partitionId),
         anomalyScore: formatAnomalyScore(anomaly.anomalyScore),
         anomalyMessage: getAnomalyMessage(anomaly.actualLogEntryRate, anomaly.typicalLogEntryRate),
+        startTime: anomaly.startTime,
       };
     });
   }, [results]);
 
-  const [expandedIds, { add: expandDataset, remove: collapseDataset }] = useSet<string>(new Set());
+  const [expandedIds, { add: expandId, remove: collapseId }] = useSet<string>(new Set());
 
   const expandedDatasetRowContents = useMemo(
     () =>
@@ -167,7 +180,10 @@ export const AnomaliesTable: React.FunctionComponent<{
       sortedItems = tableItems.sort((a, b) => (a.datasetName > b.datasetName ? 1 : -1));
     } else if (sorting.sort.field === 'anomalyScore') {
       sortedItems = tableItems.sort((a, b) => a.anomalyScore - b.anomalyScore);
+    } else if (sorting.sort.field === 'startTime') {
+      sortedItems = tableItems.sort((a, b) => a.startTime - b.startTime);
     }
+
     return sorting.sort.direction === 'asc' ? sortedItems : sortedItems.reverse();
   }, [tableItems, sorting]);
 
@@ -194,6 +210,14 @@ export const AnomaliesTable: React.FunctionComponent<{
         truncateText: true,
       },
       {
+        field: 'startTime',
+        name: anomalyStartTimeColumnName,
+        sortable: true,
+        truncateText: true,
+        width: '230px',
+        render: (startTime: number) => moment(startTime).format(dateFormat),
+      },
+      {
         field: 'datasetName',
         name: datasetColumnName,
         sortable: true,
@@ -208,13 +232,13 @@ export const AnomaliesTable: React.FunctionComponent<{
           <RowExpansionButton
             isExpanded={expandedIds.has(item.id)}
             item={item.id}
-            onExpand={expandDataset}
-            onCollapse={collapseDataset}
+            onExpand={expandId}
+            onCollapse={collapseId}
           />
         ),
       },
     ],
-    [collapseDataset, expandDataset, expandedIds]
+    [collapseId, expandId, expandedIds, dateFormat]
   );
 
   return (

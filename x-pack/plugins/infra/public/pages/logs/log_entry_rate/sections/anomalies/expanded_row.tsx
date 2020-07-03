@@ -14,14 +14,13 @@ import { AnomalyRecord } from '../../use_log_entry_rate_results';
 import { useLogEntryRateModuleContext } from '../../use_log_entry_rate_module';
 import { useLogEntryRateExamples } from '../../use_log_entry_rate_examples';
 import { LogEntryExampleMessages } from '../../../../../components/logging/log_entry_examples/log_entry_examples';
-import { bucketSpan } from '../../../../../../common/log_analysis/job_parameters';
 import { LogEntryRateExampleMessage, LogEntryRateExampleMessageHeaders } from './log_entry_example';
 import { euiStyled } from '../../../../../../../observability/public';
 
 const EXAMPLE_COUNT = 5;
 
 const examplesTitle = i18n.translate('xpack.infra.logs.analysis.anomaliesTableExamplesTitle', {
-  defaultMessage: 'Example logs',
+  defaultMessage: 'Example log entries',
 });
 
 export const AnomaliesTableExpandedRow: React.FunctionComponent<{
@@ -40,10 +39,10 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
     logEntryRateExamples,
   } = useLogEntryRateExamples({
     dataset: anomaly.partitionId,
-    endTime: anomaly.startTime + bucketSpan / 2,
+    endTime: anomaly.startTime + anomaly.duration,
     exampleCount: EXAMPLE_COUNT,
     sourceId,
-    startTime: anomaly.startTime - bucketSpan / 2,
+    startTime: anomaly.startTime,
   });
 
   useMount(() => {

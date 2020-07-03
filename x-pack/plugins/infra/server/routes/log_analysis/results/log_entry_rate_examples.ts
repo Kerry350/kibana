@@ -4,13 +4,8 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-import { schema } from '@kbn/config-schema';
 import Boom from 'boom';
-import { fold } from 'fp-ts/lib/Either';
-import { identity } from 'fp-ts/lib/function';
-import { pipe } from 'fp-ts/lib/pipeable';
-
-import { throwErrors } from '../../../../common/runtime_types';
+import { createValidationFunction } from '../../../../common/runtime_types';
 import { InfraBackendLibs } from '../../../lib/infra_types';
 import { NoLogAnalysisResultsIndexError, getLogEntryRateExamples } from '../../../lib/log_analysis';
 import { assertHasInfraMlPlugins } from '../../../utils/request_context';
@@ -20,19 +15,16 @@ import {
   LOG_ANALYSIS_GET_LOG_ENTRY_RATE_EXAMPLES_PATH,
 } from '../../../../common/http_api/log_analysis';
 
-const anyObject = schema.object({}, { unknowns: 'allow' });
-
 export const initGetLogEntryRateExamplesRoute = ({ framework, sources }: InfraBackendLibs) => {
   framework.registerRoute(
     {
       method: 'post',
       path: LOG_ANALYSIS_GET_LOG_ENTRY_RATE_EXAMPLES_PATH,
       validate: {
-        // short-circuit forced @kbn/config-schema validation so we can do io-ts validation
-        body: anyObject,
+        body: createValidationFunction(getLogEntryRateExamplesRequestPayloadRT),
       },
     },
-    async (requestContext, request, response) => {
+    framework.router.handleLegacyErrors(async (requestContext, request, response) => {
       const {
         data: {
           dataset,
@@ -40,10 +32,7 @@ export const initGetLogEntryRateExamplesRoute = ({ framework, sources }: InfraBa
           sourceId,
           timeRange: { startTime, endTime },
         },
-      } = pipe(
-        getLogEntryRateExamplesRequestPayloadRT.decode(request.body),
-        fold(throwErrors(Boom.badRequest), identity)
-      );
+      } = request.body;
 
       const sourceConfiguration = await sources.getSourceConfiguration(
         requestContext.core.savedObjects.client,
@@ -72,18 +61,22 @@ export const initGetLogEntryRateExamplesRoute = ({ framework, sources }: InfraBa
             timing,
           }),
         });
-      } catch (e) {
-        const { statusCode = 500, message = 'Unknown error occurred' } = e;
+      } catch (error) {
+        if (Boom.isBoom(error)) {
+          throw error;
+        }
 
-        if (e instanceof NoLogAnalysisResultsIndexError) {
-          return response.notFound({ body: { message } });
+        if (error instanceof NoLogAnalysisResultsIndexError) {
+          return response.notFound({ body: { message: error.message } });
         }
 
         return response.customError({
-          statusCode,
-          body: { message },
+          statusCode: error.statusCode ?? 500,
+          body: {
+            message: error.message ?? 'An unexpected error occurred',
+          },
         });
       }
-    }
+    })
   );
 };
