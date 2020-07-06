@@ -23,15 +23,48 @@ import { AnomaliesTable } from './table';
 import { RecreateJobButton } from '../../../../../components/logging/log_analysis_job_status';
 import { AnalyzeInMlButton } from '../../../../../components/logging/log_analysis_results';
 import { LoadingOverlayWrapper } from '../../../../../components/loading_overlay_wrapper';
+import {
+  Page,
+  FetchNextPage,
+  FetchPreviousPage,
+  ChangeSortOptions,
+  ChangePaginationOptions,
+  SortOptions,
+  PaginationOptions,
+  LogEntryAnomalies,
+} from '../../use_log_entry_anomalies_results';
 
 export const AnomaliesResults: React.FunctionComponent<{
   isLoading: boolean;
   results: LogEntryRateResults | null;
+  anomalies: LogEntryAnomalies;
   setTimeRange: (timeRange: TimeRange) => void;
   timeRange: TimeRange;
   viewSetupForReconfiguration: () => void;
   jobId: string;
-}> = ({ isLoading, results, setTimeRange, timeRange, viewSetupForReconfiguration, jobId }) => {
+  page: Page;
+  fetchNextPage?: FetchNextPage;
+  fetchPreviousPage?: FetchPreviousPage;
+  changeSortOptions: ChangeSortOptions;
+  changePaginationOptions: ChangePaginationOptions;
+  sortOptions: SortOptions;
+  paginationOptions: PaginationOptions;
+}> = ({
+  isLoading,
+  results,
+  setTimeRange,
+  timeRange,
+  viewSetupForReconfiguration,
+  jobId,
+  anomalies,
+  changeSortOptions,
+  sortOptions,
+  changePaginationOptions,
+  paginationOptions,
+  fetchNextPage,
+  fetchPreviousPage,
+  page,
+}) => {
   const hasAnomalies = useMemo(() => {
     return results && results.histogramBuckets
       ? results.histogramBuckets.some((bucket) => {
@@ -76,7 +109,10 @@ export const AnomaliesResults: React.FunctionComponent<{
       </EuiFlexGroup>
       <EuiSpacer size="m" />
       <LoadingOverlayWrapper isLoading={isLoading} loadingChildren={<LoadingOverlayContent />}>
-        {!results || (results && results.histogramBuckets && !results.histogramBuckets.length) ? (
+        {!results ||
+        (results && results.histogramBuckets && !results.histogramBuckets.length) ||
+        !anomalies ||
+        anomalies.length === 0 ? (
           <EuiEmptyPrompt
             title={
               <h2>
@@ -121,10 +157,17 @@ export const AnomaliesResults: React.FunctionComponent<{
             </EuiFlexGroup>
             <EuiSpacer size="l" />
             <AnomaliesTable
-              results={results}
+              results={anomalies}
               setTimeRange={setTimeRange}
               timeRange={timeRange}
               jobId={jobId}
+              changeSortOptions={changeSortOptions}
+              changePaginationOptions={changePaginationOptions}
+              sortOptions={sortOptions}
+              paginationOptions={paginationOptions}
+              fetchNextPage={fetchNextPage}
+              fetchPreviousPage={fetchPreviousPage}
+              page={page}
             />
           </>
         )}

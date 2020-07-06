@@ -37,6 +37,15 @@ import {
 
 const JOB_STATUS_POLLING_INTERVAL = 30000;
 
+export const SORT_DEFAULTS = {
+  direction: 'desc' as const,
+  field: 'anomalyScore' as const,
+};
+
+export const PAGINATION_DEFAULTS = {
+  pageSize: 50,
+};
+
 export const LogEntryRateResultsContent: React.FunctionComponent = () => {
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results' });
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results', delay: 15000 });
@@ -87,10 +96,20 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     getLogEntryAnomalies,
     isLoadingLogEntryAnomalies,
     logEntryAnomalies,
+    page,
+    fetchNextPage,
+    fetchPreviousPage,
+    changeSortOptions,
+    changePaginationOptions,
+    sortOptions,
+    paginationOptions,
   } = useLogEntryAnomaliesResults({
     sourceId,
     startTime: queryTimeRange.value.startTime,
     endTime: queryTimeRange.value.endTime,
+    lastChangedTime: queryTimeRange.lastChangedTime,
+    defaultSortOptions: SORT_DEFAULTS,
+    defaultPaginationOptions: PAGINATION_DEFAULTS,
   });
 
   const handleQueryTimeRangeChange = useCallback(
@@ -150,7 +169,6 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
 
   useEffect(() => {
     getLogEntryRate();
-    getLogEntryAnomalies();
   }, [getLogEntryRate, getLogEntryAnomalies, queryTimeRange.lastChangedTime]);
 
   useEffect(() => {
@@ -238,12 +256,20 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
         <EuiFlexItem grow={false}>
           <EuiPanel paddingSize="m">
             <AnomaliesResults
-              isLoading={isLoading}
+              isLoading={isLoading || isLoadingLogEntryAnomalies}
               viewSetupForReconfiguration={viewSetupForReconfiguration}
               results={logEntryRate}
+              anomalies={logEntryAnomalies}
               setTimeRange={handleChartTimeRangeChange}
               timeRange={queryTimeRange.value}
               jobId={jobIds['log-entry-rate']}
+              page={page}
+              fetchNextPage={fetchNextPage}
+              fetchPreviousPage={fetchPreviousPage}
+              changeSortOptions={changeSortOptions}
+              changePaginationOptions={changePaginationOptions}
+              sortOptions={sortOptions}
+              paginationOptions={paginationOptions}
             />
           </EuiPanel>
         </EuiFlexItem>

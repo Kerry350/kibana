@@ -8,7 +8,7 @@ import { EuiBasicTable, EuiBasicTableColumn } from '@elastic/eui';
 import { RIGHT_ALIGNMENT } from '@elastic/eui/lib/services';
 import moment from 'moment';
 import { i18n } from '@kbn/i18n';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useSet } from 'react-use';
 import { TimeRange } from '../../../../../../common/http_api/shared/time_range';
 import {
@@ -16,10 +16,19 @@ import {
   getFriendlyNameForPartitionId,
 } from '../../../../../../common/log_analysis';
 import { RowExpansionButton } from '../../../../../components/basic_table';
-import { LogEntryRateResults } from '../../use_log_entry_rate_results';
 import { AnomaliesTableExpandedRow } from './expanded_row';
 import { AnomalySeverityIndicator } from '../../../../../components/logging/log_analysis_results/anomaly_severity_indicator';
 import { useKibanaUiSetting } from '../../../../../utils/use_kibana_ui_setting';
+import {
+  Page,
+  FetchNextPage,
+  FetchPreviousPage,
+  ChangeSortOptions,
+  ChangePaginationOptions,
+  SortOptions,
+  PaginationOptions,
+  LogEntryAnomalies,
+} from '../../use_log_entry_anomalies_results';
 
 interface TableItem {
   id: string;
@@ -28,21 +37,6 @@ interface TableItem {
   anomalyScore: number;
   anomalyMessage: string;
   startTime: number;
-}
-
-interface SortingOptions {
-  sort: {
-    field: keyof TableItem;
-    direction: 'asc' | 'desc';
-  };
-}
-
-interface PaginationOptions {
-  pageIndex: number;
-  pageSize: number;
-  totalItemCount: number;
-  pageSizeOptions: number[];
-  hidePerPageOptions: boolean;
 }
 
 const anomalyScoreColumnName = i18n.translate(
@@ -94,21 +88,46 @@ const getAnomalyMessage = (actualRate: number, typicalRate: number): string => {
 };
 
 export const AnomaliesTable: React.FunctionComponent<{
-  results: LogEntryRateResults;
+  results: LogEntryAnomalies;
   setTimeRange: (timeRange: TimeRange) => void;
   timeRange: TimeRange;
   jobId: string;
-}> = ({ results, timeRange, setTimeRange, jobId }) => {
+  changeSortOptions: ChangeSortOptions;
+  changePaginationOptions: ChangePaginationOptions;
+  sortOptions: SortOptions;
+  paginationOptions: PaginationOptions;
+  page: Page;
+  fetchNextPage?: FetchNextPage;
+  fetchPreviousPage?: FetchPreviousPage;
+}> = ({
+  results,
+  timeRange,
+  setTimeRange,
+  jobId,
+  changeSortOptions,
+  sortOptions,
+  changePaginationOptions,
+  paginationOptions,
+  fetchNextPage,
+  fetchPreviousPage,
+  page,
+}) => {
   const [dateFormat] = useKibanaUiSetting('dateFormat', 'Y-MM-DD HH:mm:ss');
 
+  const tableSortOptions = useMemo(() => {
+    return {
+      sort: sortOptions,
+    };
+  }, [sortOptions]);
+
   const tableItems: TableItem[] = useMemo(() => {
-    return results.anomalies.map((anomaly) => {
+    return results.map((anomaly) => {
       return {
         id: anomaly.id,
-        dataset: anomaly.partitionId,
-        datasetName: getFriendlyNameForPartitionId(anomaly.partitionId),
+        dataset: anomaly.dataset,
+        datasetName: getFriendlyNameForPartitionId(anomaly.dataset),
         anomalyScore: formatAnomalyScore(anomaly.anomalyScore),
-        anomalyMessage: getAnomalyMessage(anomaly.actualLogEntryRate, anomaly.typicalLogEntryRate),
+        anomalyMessage: getAnomalyMessage(anomaly.actual, anomaly.typical),
         startTime: anomaly.startTime,
       };
     });
@@ -119,7 +138,7 @@ export const AnomaliesTable: React.FunctionComponent<{
   const expandedDatasetRowContents = useMemo(
     () =>
       [...expandedIds].reduce<Record<string, React.ReactNode>>((aggregatedDatasetRows, id) => {
-        const anomaly = results.anomalies.find((_anomaly) => _anomaly.id === id);
+        const anomaly = results.find((_anomaly) => _anomaly.id === id);
 
         return {
           ...aggregatedDatasetRows,
@@ -131,66 +150,12 @@ export const AnomaliesTable: React.FunctionComponent<{
     [expandedIds, results, timeRange, jobId]
   );
 
-  const [sorting, setSorting] = useState<SortingOptions>({
-    sort: {
-      field: 'anomalyScore',
-      direction: 'desc',
-    },
-  });
-
-  const [_pagination, setPagination] = useState<PaginationOptions>({
-    pageIndex: 0,
-    pageSize: 20,
-    totalItemCount: results.anomalies.length,
-    pageSizeOptions: [10, 20, 50],
-    hidePerPageOptions: false,
-  });
-
-  const paginationOptions = useMemo(() => {
-    return {
-      ..._pagination,
-      totalItemCount: results.anomalies.length,
-    };
-  }, [_pagination, results]);
-
   const handleTableChange = useCallback(
-    ({ page = {}, sort = {} }) => {
-      const { index, size } = page;
-      setPagination((currentPagination) => {
-        return {
-          ...currentPagination,
-          pageIndex: index,
-          pageSize: size,
-        };
-      });
-      const { field, direction } = sort;
-      setSorting({
-        sort: {
-          field,
-          direction,
-        },
-      });
+    ({ sort = {} }) => {
+      changeSortOptions(sort);
     },
-    [setSorting, setPagination]
+    [changeSortOptions]
   );
-
-  const sortedTableItems = useMemo(() => {
-    let sortedItems: TableItem[] = [];
-    if (sorting.sort.field === 'datasetName') {
-      sortedItems = tableItems.sort((a, b) => (a.datasetName > b.datasetName ? 1 : -1));
-    } else if (sorting.sort.field === 'anomalyScore') {
-      sortedItems = tableItems.sort((a, b) => a.anomalyScore - b.anomalyScore);
-    } else if (sorting.sort.field === 'startTime') {
-      sortedItems = tableItems.sort((a, b) => a.startTime - b.startTime);
-    }
-
-    return sorting.sort.direction === 'asc' ? sortedItems : sortedItems.reverse();
-  }, [tableItems, sorting]);
-
-  const pageOfItems: TableItem[] = useMemo(() => {
-    const { pageIndex, pageSize } = paginationOptions;
-    return sortedTableItems.slice(pageIndex * pageSize, pageIndex * pageSize + pageSize);
-  }, [paginationOptions, sortedTableItems]);
 
   const columns: Array<EuiBasicTableColumn<TableItem>> = useMemo(
     () => [
@@ -243,14 +208,13 @@ export const AnomaliesTable: React.FunctionComponent<{
 
   return (
     <EuiBasicTable
-      items={pageOfItems}
+      items={tableItems}
       itemId="id"
       itemIdToExpandedRowMap={expandedDatasetRowContents}
       isExpandable={true}
       hasActions={true}
       columns={columns}
-      pagination={paginationOptions}
-      sorting={sorting}
+      sorting={tableSortOptions}
       onChange={handleTableChange}
     />
   );

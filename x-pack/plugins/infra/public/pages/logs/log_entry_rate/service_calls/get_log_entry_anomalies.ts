@@ -11,11 +11,14 @@ import {
   LOG_ANALYSIS_GET_LOG_ENTRY_ANOMALIES_PATH,
 } from '../../../../../common/http_api/log_analysis';
 import { decodeOrThrow } from '../../../../../common/runtime_types';
+import { Sort, Pagination } from '../../../../../common/http_api/log_analysis';
 
 export const callGetLogEntryAnomaliesAPI = async (
   sourceId: string,
   startTime: number,
-  endTime: number
+  endTime: number,
+  sort: Sort,
+  pagination: Pagination
 ) => {
   const response = await npStart.http.fetch(LOG_ANALYSIS_GET_LOG_ENTRY_ANOMALIES_PATH, {
     method: 'POST',
@@ -27,6 +30,8 @@ export const callGetLogEntryAnomaliesAPI = async (
             startTime,
             endTime,
           },
+          sort,
+          pagination,
         },
       })
     ),

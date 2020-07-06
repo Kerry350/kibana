@@ -10,7 +10,7 @@ import { i18n } from '@kbn/i18n';
 import React from 'react';
 import { useMount } from 'react-use';
 import { TimeRange } from '../../../../../../common/http_api/shared/time_range';
-import { AnomalyRecord } from '../../use_log_entry_rate_results';
+import { LogEntryAnomaly } from '../../../../../../common/http_api';
 import { useLogEntryRateModuleContext } from '../../use_log_entry_rate_module';
 import { useLogEntryRateExamples } from '../../use_log_entry_rate_examples';
 import { LogEntryExampleMessages } from '../../../../../components/logging/log_entry_examples/log_entry_examples';
@@ -24,7 +24,7 @@ const examplesTitle = i18n.translate('xpack.infra.logs.analysis.anomaliesTableEx
 });
 
 export const AnomaliesTableExpandedRow: React.FunctionComponent<{
-  anomaly: AnomalyRecord;
+  anomaly: LogEntryAnomaly;
   timeRange: TimeRange;
   jobId: string;
 }> = ({ anomaly, timeRange, jobId }) => {
@@ -38,7 +38,7 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
     isLoadingLogEntryRateExamples,
     logEntryRateExamples,
   } = useLogEntryRateExamples({
-    dataset: anomaly.partitionId,
+    dataset: anomaly.dataset,
     endTime: anomaly.startTime + anomaly.duration,
     exampleCount: EXAMPLE_COUNT,
     sourceId,
@@ -87,11 +87,11 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
             <EuiFlexItem grow={false}>
               <EuiStat
                 titleSize="s"
-                title={`${numeral(anomaly.typicalLogEntryRate).format('0.00a')} ${i18n.translate(
+                title={`${numeral(anomaly.typical).format('0.00a')} ${i18n.translate(
                   'xpack.infra.logs.analysis.anomaliesExpandedRowTypicalRateTitle',
                   {
                     defaultMessage: '{typicalCount, plural, one {message} other {messages}}',
-                    values: { typicalCount: anomaly.typicalLogEntryRate },
+                    values: { typicalCount: anomaly.typical },
                   }
                 )}`}
                 description={i18n.translate(
@@ -105,11 +105,11 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
             <EuiFlexItem grow={false}>
               <EuiStat
                 titleSize="s"
-                title={`${numeral(anomaly.actualLogEntryRate).format('0.00a')} ${i18n.translate(
+                title={`${numeral(anomaly.actual).format('0.00a')} ${i18n.translate(
                   'xpack.infra.logs.analysis.anomaliesExpandedRowActualRateTitle',
                   {
                     defaultMessage: '{actualCount, plural, one {message} other {messages}}',
-                    values: { actualCount: anomaly.actualLogEntryRate },
+                    values: { actualCount: anomaly.actual },
                   }
                 )}`}
                 description={i18n.translate(
