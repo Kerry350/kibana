@@ -68,7 +68,16 @@ export async function getLogEntryAnomalies(
   );
 
   const data = anomalies.map((anomaly) => {
-    const { id, anomalyScore, dataset, typical, actual, jobId } = anomaly;
+    const {
+      id,
+      anomalyScore,
+      dataset,
+      typical,
+      actual,
+      jobId,
+      duration,
+      startTime: anomalyStartTime,
+    } = anomaly;
 
     return {
       id,
@@ -76,6 +85,8 @@ export async function getLogEntryAnomalies(
       dataset,
       typical,
       actual,
+      duration,
+      startTime: anomalyStartTime,
       type: jobId === logRateJobId ? ('logRate' as const) : ('logCategory' as const),
     };
   });
@@ -124,6 +135,8 @@ async function fetchLogEntryAnomalies(
       typical,
       actual,
       partition_field_value: dataset,
+      bucket_span: duration,
+      timestamp: anomalyStartTime,
     } = result._source;
 
     return {
@@ -133,6 +146,8 @@ async function fetchLogEntryAnomalies(
       typical: typical[0],
       actual: actual[0],
       jobId: job_id,
+      startTime: anomalyStartTime,
+      duration: duration * 1000,
     };
   });
 

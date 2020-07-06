@@ -30,7 +30,7 @@ export const createLogEntryAnomaliesQuery = (
   sort: Sort,
   pagination: Pagination
 ) => {
-  const { field, direction } = sort;
+  const { field } = sort;
   const { pageSize, cursor } = pagination;
 
   const filters = [
@@ -38,10 +38,21 @@ export const createLogEntryAnomaliesQuery = (
     ...createTimeRangeFilters(startTime, endTime),
     ...createResultTypeFilters(['record']),
   ];
-  const sourceFields = ['job_id', 'record_score', 'typical', 'actual', 'partition_field_value'];
+  const sourceFields = [
+    'job_id',
+    'record_score',
+    'typical',
+    'actual',
+    'partition_field_value',
+    'timestamp',
+    'bucket_span',
+  ];
+
+  const querySortDirection = parsePaginationCursor(sort, pagination);
+
   const sortOptions = [
-    { [sortToMlFieldMap[field]]: direction },
-    { [TIEBREAKER_FIELD]: direction }, // Tiebreaker
+    { [sortToMlFieldMap[field]]: querySortDirection },
+    { [TIEBREAKER_FIELD]: querySortDirection }, // Tiebreaker
   ];
 
   const resultsQuery = {
@@ -70,8 +81,10 @@ export const logEntryAnomalyHitRT = rt.type({
     typical: rt.array(rt.number),
     actual: rt.array(rt.number),
     partition_field_value: rt.string,
+    bucket_span: rt.number,
+    timestamp: rt.number,
   }),
-  sort: rt.tuple([rt.union([rt.string, rt.number]), rt.string]),
+  sort: rt.tuple([rt.union([rt.string, rt.number]), rt.union([rt.string, rt.number])]),
 });
 
 export type LogEntryAnomalyHit = rt.TypeOf<typeof logEntryAnomalyHitRT>;
@@ -86,3 +99,21 @@ export const logEntryAnomaliesResponseRT = rt.intersection([
 ]);
 
 export type LogEntryAnomaliesResponseRT = rt.TypeOf<typeof logEntryAnomaliesResponseRT>;
+
+const parsePaginationCursor = (sort: Sort, pagination: Pagination) => {
+  const { cursor } = pagination;
+  const { direction } = sort;
+
+  if (!cursor) {
+    return direction;
+  }
+
+  // We will always use ES's search_after to paginate, to mimic "search_before" behaviour we
+  // need to reverse the user's chosen search direction for the ES query.
+
+  if ('search_before' in cursor) {
+    return direction === 'desc' ? 'asc' : 'desc';
+  } else {
+    return direction;
+  }
+};

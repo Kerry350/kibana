@@ -12,7 +12,10 @@ export const LOG_ANALYSIS_GET_LOG_ENTRY_ANOMALIES_PATH =
   '/api/infra/log_analysis/results/log_entry_anomalies';
 
 // [Sort field value, tiebreaker value]
-const paginationCursorRT = rt.tuple([rt.union([rt.string, rt.number]), rt.string]);
+const paginationCursorRT = rt.tuple([
+  rt.union([rt.string, rt.number]),
+  rt.union([rt.string, rt.number]),
+]);
 
 const logRateAnomalyTypeRT = rt.literal('logRate');
 const logCategorisationAnomalyTypeRT = rt.literal('logCategory');
@@ -25,6 +28,8 @@ const logEntryAnomalyRT = rt.type({
   typical: rt.number,
   actual: rt.number,
   type: anomalyTypeRT,
+  duration: rt.number,
+  startTime: rt.number,
 });
 
 export type LogEntryAnomaly = rt.TypeOf<typeof logEntryAnomalyRT>;
@@ -54,14 +59,23 @@ const sortOptions = rt.union([
   rt.literal('dataset'),
   rt.literal('startTime'),
 ]);
+
 const sortDirections = rt.union([rt.literal('asc'), rt.literal('desc')]);
+
+const paginationPreviousPageCursor = rt.type({
+  searchBefore: paginationCursorRT,
+});
+
+const paginationNextPageCursor = rt.type({
+  searchAfter: paginationCursorRT,
+});
 
 const paginationRT = rt.intersection([
   rt.type({
     pageSize: rt.number,
   }),
   rt.partial({
-    cursor: paginationCursorRT,
+    cursor: rt.union([paginationPreviousPageCursor, paginationNextPageCursor]),
   }),
 ]);
 
