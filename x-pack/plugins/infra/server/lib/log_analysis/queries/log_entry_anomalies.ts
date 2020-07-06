@@ -48,7 +48,7 @@ export const createLogEntryAnomaliesQuery = (
     'bucket_span',
   ];
 
-  const querySortDirection = parsePaginationCursor(sort, pagination);
+  const { querySortDirection, queryCursor } = parsePaginationCursor(sort, pagination);
 
   const sortOptions = [
     { [sortToMlFieldMap[field]]: querySortDirection },
@@ -63,7 +63,7 @@ export const createLogEntryAnomaliesQuery = (
           filter: filters,
         },
       },
-      search_after: cursor,
+      search_after: queryCursor,
       sort: sortOptions,
       size: pageSize,
       _source: sourceFields,
@@ -105,15 +105,17 @@ const parsePaginationCursor = (sort: Sort, pagination: Pagination) => {
   const { direction } = sort;
 
   if (!cursor) {
-    return direction;
+    return { querySortDirection: direction, queryCursor: undefined };
   }
 
   // We will always use ES's search_after to paginate, to mimic "search_before" behaviour we
   // need to reverse the user's chosen search direction for the ES query.
-
-  if ('search_before' in cursor) {
-    return direction === 'desc' ? 'asc' : 'desc';
+  if ('searchBefore' in cursor) {
+    return {
+      querySortDirection: direction === 'desc' ? 'asc' : 'desc',
+      queryCursor: cursor.searchBefore,
+    };
   } else {
-    return direction;
+    return { querySortDirection: direction, queryCursor: cursor.searchAfter };
   }
 };

@@ -205,17 +205,25 @@ export const AnomaliesTable: React.FunctionComponent<{
     ],
     [collapseId, expandId, expandedIds, dateFormat]
   );
-
   return (
-    <EuiBasicTable
-      items={tableItems}
-      itemId="id"
-      itemIdToExpandedRowMap={expandedDatasetRowContents}
-      isExpandable={true}
-      hasActions={true}
-      columns={columns}
-      sorting={tableSortOptions}
-      onChange={handleTableChange}
-    />
+    <>
+      <EuiBasicTable
+        items={tableItems}
+        itemId="id"
+        itemIdToExpandedRowMap={expandedDatasetRowContents}
+        isExpandable={true}
+        hasActions={true}
+        columns={columns}
+        sorting={tableSortOptions}
+        onChange={handleTableChange}
+      />
+      <div>
+        {fetchPreviousPage ? (
+          <button onClick={() => fetchPreviousPage()}>Previous page</button>
+        ) : null}
+        <span>Page: {page}</span>
+        {fetchNextPage ? <button onClick={() => fetchNextPage()}>Next page</button> : null}
+      </div>
+    </>
   );
 };

@@ -19,6 +19,10 @@ export type FetchPreviousPage = () => void;
 export type ChangeSortOptions = (sortOptions: Sort) => void;
 export type ChangePaginationOptions = (paginationOptions: PaginationOptions) => void;
 export type LogEntryAnomalies = LogEntryAnomaly[];
+interface PaginationCursors {
+  previousPageCursor: PaginationCursor;
+  nextPageCursor: PaginationCursor;
+}
 
 export const useLogEntryAnomaliesResults = ({
   endTime,
@@ -41,7 +45,7 @@ export const useLogEntryAnomaliesResults = ({
     defaultPaginationOptions
   );
   // Cursor from the last request
-  const [lastReceivedCursor, setLastReceivedCursor] = useState<PaginationCursor | undefined>();
+  const [lastReceivedCursors, setLastReceivedCursors] = useState<PaginationCursors | undefined>();
   // Cursor to use for the next request
   const [paginationCursor, setPaginationCursor] = useState<Pagination['cursor'] | undefined>(
     undefined
@@ -67,9 +71,9 @@ export const useLogEntryAnomaliesResults = ({
           cursor: paginationCursor,
         });
       },
-      onResolve: ({ data: { anomalies, paginationCursor: requestCursor } }) => {
-        if (paginationCursor) {
-          setLastReceivedCursor(requestCursor);
+      onResolve: ({ data: { anomalies, paginationCursors: requestCursors } }) => {
+        if (requestCursors) {
+          setLastReceivedCursors(requestCursors);
           if (anomalies.length < paginationOptions.pageSize) {
             setHasNextPage(false);
           } else {
@@ -82,7 +86,7 @@ export const useLogEntryAnomaliesResults = ({
         setLogEntryAnomalies(anomalies);
       },
     },
-    [endTime, sourceId, startTime, sortOptions, paginationOptions, setHasNextPage]
+    [endTime, sourceId, startTime, sortOptions, paginationOptions, setHasNextPage, paginationCursor]
   );
 
   const changeSortOptions = useCallback(
@@ -109,25 +113,25 @@ export const useLogEntryAnomaliesResults = ({
   useEffect(() => {
     // Refetch entries when options change
     getLogEntryAnomalies();
-  }, [sortOptions, paginationOptions, page, getLogEntryAnomalies]);
+  }, [sortOptions, paginationOptions, getLogEntryAnomalies, paginationCursor]);
 
   const handleFetchNextPage = useCallback(() => {
-    if (lastReceivedCursor) {
+    if (lastReceivedCursors) {
       setPage(page + 1);
       setPaginationCursor({
-        searchAfter: lastReceivedCursor,
+        searchAfter: lastReceivedCursors.nextPageCursor,
       });
     }
-  }, [setPage, lastReceivedCursor, page]);
+  }, [setPage, lastReceivedCursors, page]);
 
   const handleFetchPreviousPage = useCallback(() => {
-    if (lastReceivedCursor) {
+    if (lastReceivedCursors) {
       setPage(page - 1);
       setPaginationCursor({
-        searchBefore: lastReceivedCursor,
+        searchBefore: lastReceivedCursors.previousPageCursor,
       });
     }
-  }, [setPage, lastReceivedCursor, page]);
+  }, [setPage, lastReceivedCursors, page]);
 
   const isLoadingLogEntryAnomalies = useMemo(
     () => getLogEntryAnomaliesRequest.state === 'pending',

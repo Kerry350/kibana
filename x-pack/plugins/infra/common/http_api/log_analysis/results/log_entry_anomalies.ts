@@ -43,7 +43,10 @@ export const getLogEntryAnomaliesSuccessReponsePayloadRT = rt.intersection([
         anomalies: rt.array(logEntryAnomalyRT),
       }),
       rt.partial({
-        paginationCursor: paginationCursorRT,
+        paginationCursors: rt.type({
+          previousPageCursor: paginationCursorRT,
+          nextPageCursor: paginationCursorRT,
+        }),
       }),
     ]),
   }),

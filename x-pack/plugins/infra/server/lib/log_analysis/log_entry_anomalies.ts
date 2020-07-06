@@ -56,7 +56,7 @@ export async function getLogEntryAnomalies(
 
   const {
     anomalies,
-    paginationCursor,
+    paginationCursors,
     timing: { spans: fetchLogEntryAnomaliesSpans },
   } = await fetchLogEntryAnomalies(
     context.infra.mlSystem,
@@ -95,7 +95,7 @@ export async function getLogEntryAnomalies(
 
   return {
     data,
-    paginationCursor,
+    paginationCursors,
     timing: {
       spans: [logEntryAnomaliesSpan, ...jobSpans, ...fetchLogEntryAnomaliesSpans],
     },
@@ -125,8 +125,19 @@ async function fetchLogEntryAnomalies(
     )
   );
 
-  const paginationCursor =
-    results.hits.hits.length > 0 ? results.hits.hits[results.hits.hits.length - 1].sort : undefined;
+  // To "search_before" the sort order will have been reversed for ES.
+  // The results are now reversed back, to match the requested sort.
+  if (pagination.cursor && 'searchBefore' in pagination.cursor) {
+    results.hits.hits.reverse();
+  }
+
+  const paginationCursors =
+    results.hits.hits.length > 0
+      ? {
+          previousPageCursor: results.hits.hits[0].sort,
+          nextPageCursor: results.hits.hits[results.hits.hits.length - 1].sort,
+        }
+      : undefined;
 
   const anomalies = results.hits.hits.map((result) => {
     const {
@@ -155,7 +166,7 @@ async function fetchLogEntryAnomalies(
 
   return {
     anomalies,
-    paginationCursor,
+    paginationCursors,
     timing: {
       spans: [fetchLogEntryAnomaliesSpan],
     },
