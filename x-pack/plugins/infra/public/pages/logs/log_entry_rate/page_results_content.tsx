@@ -33,7 +33,13 @@ export const PAGINATION_DEFAULTS = {
   pageSize: 25,
 };
 
-export const LogEntryRateResultsContent: React.FunctionComponent = () => {
+interface LogEntryRateResultsContentProps {
+  onOpenSetup: () => void;
+}
+
+export const LogEntryRateResultsContent: React.FunctionComponent<LogEntryRateResultsContentProps> = ({
+  onOpenSetup,
+}) => {
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results' });
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results', delay: 15000 });
 
@@ -142,13 +148,26 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     [setAutoRefresh]
   );
 
+  const viewSetupFlyoutForReconfiguration = useCallback(() => {
+    viewSetupForReconfiguration();
+    onOpenSetup();
+  }, [viewSetupForReconfiguration, onOpenSetup]);
+
+  const viewSetupFlyoutForUpdate = useCallback(() => {
+    viewSetupForUpdate();
+    onOpenSetup();
+  }, [viewSetupForUpdate, onOpenSetup]);
+
   /* eslint-disable-next-line react-hooks/exhaustive-deps */
   const hasResults = useMemo(() => (logEntryRate?.histogramBuckets?.length ?? 0) > 0, [
     logEntryRate,
   ]);
 
   const isFirstUse = useMemo(
-    () => setupStatus.type === 'skipped' && !!setupStatus.newlyCreated && !hasResults,
+    () =>
+      ((setupStatus.type === 'skipped' && !!setupStatus.newlyCreated) ||
+        setupStatus.type === 'succeeded') &&
+      !hasResults,
     [hasResults, setupStatus]
   );
 
@@ -197,15 +216,15 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
             hasOutdatedJobDefinitions={hasOutdatedJobDefinitions}
             hasStoppedJobs={hasStoppedJobs}
             isFirstUse={isFirstUse}
-            onRecreateMlJobForReconfiguration={viewSetupForReconfiguration}
-            onRecreateMlJobForUpdate={viewSetupForUpdate}
+            onRecreateMlJobForReconfiguration={viewSetupFlyoutForReconfiguration}
+            onRecreateMlJobForUpdate={viewSetupFlyoutForUpdate}
           />
         </EuiFlexItem>
         <EuiFlexItem grow={false}>
           <EuiPanel paddingSize="m">
             <AnomaliesResults
               isLoading={isLoading || isLoadingLogEntryAnomalies}
-              viewSetupForReconfiguration={viewSetupForReconfiguration}
+              viewSetupForReconfiguration={viewSetupFlyoutForReconfiguration}
               results={logEntryRate}
               anomalies={logEntryAnomalies}
               setTimeRange={handleChartTimeRangeChange}
