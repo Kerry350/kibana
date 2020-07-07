@@ -31,7 +31,7 @@ export const createLogEntryAnomaliesQuery = (
   pagination: Pagination
 ) => {
   const { field } = sort;
-  const { pageSize, cursor } = pagination;
+  const { pageSize } = pagination;
 
   const filters = [
     ...createJobIdFilters(jobIds),

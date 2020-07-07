@@ -12,9 +12,9 @@ import { useMount } from 'react-use';
 import { TimeRange } from '../../../../../../common/http_api/shared/time_range';
 import { LogEntryAnomaly } from '../../../../../../common/http_api';
 import { useLogEntryRateModuleContext } from '../../use_log_entry_rate_module';
-import { useLogEntryRateExamples } from '../../use_log_entry_rate_examples';
+import { useLogEntryExamples } from '../../use_log_entry_examples';
 import { LogEntryExampleMessages } from '../../../../../components/logging/log_entry_examples/log_entry_examples';
-import { LogEntryRateExampleMessage, LogEntryRateExampleMessageHeaders } from './log_entry_example';
+import { LogEntryExampleMessage, LogEntryExampleMessageHeaders } from './log_entry_example';
 import { euiStyled } from '../../../../../../../observability/public';
 
 const EXAMPLE_COUNT = 5;
@@ -33,11 +33,11 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
   } = useLogEntryRateModuleContext();
 
   const {
-    getLogEntryRateExamples,
-    hasFailedLoadingLogEntryRateExamples,
-    isLoadingLogEntryRateExamples,
-    logEntryRateExamples,
-  } = useLogEntryRateExamples({
+    getLogEntryExamples,
+    hasFailedLoadingLogEntryExamples,
+    isLoadingLogEntryExamples,
+    logEntryExamples,
+  } = useLogEntryExamples({
     dataset: anomaly.dataset,
     endTime: anomaly.startTime + anomaly.duration,
     exampleCount: EXAMPLE_COUNT,
@@ -46,7 +46,7 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
   });
 
   useMount(() => {
-    getLogEntryRateExamples();
+    getLogEntryExamples();
   });
 
   return (
@@ -57,17 +57,17 @@ export const AnomaliesTableExpandedRow: React.FunctionComponent<{
             <h3>{examplesTitle}</h3>
           </EuiTitle>
           <LogEntryExampleMessages
-            isLoading={isLoadingLogEntryRateExamples}
-            hasFailedLoading={hasFailedLoadingLogEntryRateExamples}
-            hasResults={logEntryRateExamples.length > 0}
+            isLoading={isLoadingLogEntryExamples}
+            hasFailedLoading={hasFailedLoadingLogEntryExamples}
+            hasResults={logEntryExamples.length > 0}
             exampleCount={EXAMPLE_COUNT}
-            onReload={getLogEntryRateExamples}
+            onReload={getLogEntryExamples}
           >
-            {logEntryRateExamples.length > 0 ? (
+            {logEntryExamples.length > 0 ? (
               <>
-                <LogEntryRateExampleMessageHeaders dateTime={logEntryRateExamples[0].timestamp} />
-                {logEntryRateExamples.map((example, exampleIndex) => (
-                  <LogEntryRateExampleMessage
+                <LogEntryExampleMessageHeaders dateTime={logEntryExamples[0].timestamp} />
+                {logEntryExamples.map((example, exampleIndex) => (
+                  <LogEntryExampleMessage
                     key={exampleIndex}
                     id={example.id}
                     dataset={example.dataset}

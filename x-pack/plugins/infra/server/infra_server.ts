@@ -15,7 +15,7 @@ import {
   initGetLogEntryCategoryDatasetsRoute,
   initGetLogEntryCategoryExamplesRoute,
   initGetLogEntryRateRoute,
-  initGetLogEntryRateExamplesRoute,
+  initGetLogEntryExamplesRoute,
   initValidateLogAnalysisDatasetsRoute,
   initValidateLogAnalysisIndicesRoute,
   initGetLogEntryAnomaliesRoute,
@@ -59,7 +59,7 @@ export const initInfraServer = (libs: InfraBackendLibs) => {
   initValidateLogAnalysisDatasetsRoute(libs);
   initValidateLogAnalysisIndicesRoute(libs);
   initLogEntriesRoute(libs);
-  initGetLogEntryRateExamplesRoute(libs);
+  initGetLogEntryExamplesRoute(libs);
   initLogEntriesHighlightsRoute(libs);
   initLogEntriesSummaryRoute(libs);
   initLogEntriesSummaryHighlightsRoute(libs);

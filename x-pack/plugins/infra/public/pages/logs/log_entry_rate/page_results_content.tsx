@@ -5,26 +5,14 @@
  */
 
 import datemath from '@elastic/datemath';
-import {
-  EuiBadge,
-  EuiFlexGroup,
-  EuiFlexItem,
-  EuiPage,
-  EuiPanel,
-  EuiSuperDatePicker,
-  EuiText,
-} from '@elastic/eui';
-import numeral from '@elastic/numeral';
-import { FormattedMessage } from '@kbn/i18n/react';
+import { EuiFlexGroup, EuiFlexItem, EuiPage, EuiPanel, EuiSuperDatePicker } from '@elastic/eui';
 import moment from 'moment';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { euiStyled, useTrackPageview } from '../../../../../observability/public';
 import { TimeRange } from '../../../../common/http_api/shared/time_range';
 import { bucketSpan } from '../../../../common/log_analysis';
-import { LoadingOverlayWrapper } from '../../../components/loading_overlay_wrapper';
 import { LogAnalysisJobProblemIndicator } from '../../../components/logging/log_analysis_job_status';
 import { useInterval } from '../../../hooks/use_interval';
-import { useKibanaUiSetting } from '../../../utils/use_kibana_ui_setting';
 import { AnomaliesResults } from './sections/anomalies';
 import { useLogEntryRateModuleContext } from './use_log_entry_rate_module';
 import { useLogEntryRateResults } from './use_log_entry_rate_results';
@@ -48,8 +36,6 @@ export const PAGINATION_DEFAULTS = {
 export const LogEntryRateResultsContent: React.FunctionComponent = () => {
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results' });
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results', delay: 15000 });
-
-  const [dateFormat] = useKibanaUiSetting('dateFormat', 'MMMM D, YYYY h:mm A');
 
   const {
     fetchJobStatus,
