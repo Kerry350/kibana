@@ -57,6 +57,7 @@ export async function getLogEntryAnomalies(
   const {
     anomalies,
     paginationCursors,
+    hasMoreEntries,
     timing: { spans: fetchLogEntryAnomaliesSpans },
   } = await fetchLogEntryAnomalies(
     context.infra.mlSystem,
@@ -96,6 +97,7 @@ export async function getLogEntryAnomalies(
   return {
     data,
     paginationCursors,
+    hasMoreEntries,
     timing: {
       spans: [logEntryAnomaliesSpan, ...jobSpans, ...fetchLogEntryAnomaliesSpans],
     },
@@ -117,29 +119,45 @@ async function fetchLogEntryAnomalies(
     };
   }
 
+  // We'll request 1 extra entry on top of our pageSize to determine if there are
+  // more entries to be fetched. This avoids scenarios where the client side can't
+  // determine if entries.length === pageSize actually means there are more entries / next page
+  // / or not.
+  const expandedPagination = { ...pagination, pageSize: pagination.pageSize + 1 };
+
   const finalizeFetchLogEntryAnomaliesSpan = startTracingSpan('fetch log entry anomalies');
 
   const results = decodeOrThrow(logEntryAnomaliesResponseRT)(
     await mlSystem.mlAnomalySearch(
-      createLogEntryAnomaliesQuery(jobIds, startTime, endTime, sort, pagination)
+      createLogEntryAnomaliesQuery(jobIds, startTime, endTime, sort, expandedPagination)
     )
   );
+
+  const {
+    hits: { hits },
+  } = results;
+  const hasMoreEntries = hits.length > pagination.pageSize;
+
+  // An extra entry was found and hasMoreEntries has been determined, the extra entry can be removed.
+  if (hasMoreEntries) {
+    hits.pop();
+  }
 
   // To "search_before" the sort order will have been reversed for ES.
   // The results are now reversed back, to match the requested sort.
   if (pagination.cursor && 'searchBefore' in pagination.cursor) {
-    results.hits.hits.reverse();
+    hits.reverse();
   }
 
   const paginationCursors =
-    results.hits.hits.length > 0
+    hits.length > 0
       ? {
-          previousPageCursor: results.hits.hits[0].sort,
-          nextPageCursor: results.hits.hits[results.hits.hits.length - 1].sort,
+          previousPageCursor: hits[0].sort,
+          nextPageCursor: hits[hits.length - 1].sort,
         }
       : undefined;
 
-  const anomalies = results.hits.hits.map((result) => {
+  const anomalies = hits.map((result) => {
     const {
       job_id,
       record_score: anomalyScore,
@@ -167,6 +185,7 @@ async function fetchLogEntryAnomalies(
   return {
     anomalies,
     paginationCursors,
+    hasMoreEntries,
     timing: {
       spans: [fetchLogEntryAnomaliesSpan],
     },

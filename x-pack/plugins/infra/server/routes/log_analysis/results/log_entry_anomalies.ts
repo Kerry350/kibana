@@ -42,7 +42,12 @@ export const initGetLogEntryAnomaliesRoute = ({ framework }: InfraBackendLibs) =
       try {
         assertHasInfraMlPlugins(requestContext);
 
-        const { data: logEntryAnomalies, paginationCursors, timing } = await getLogEntryAnomalies(
+        const {
+          data: logEntryAnomalies,
+          paginationCursors,
+          hasMoreEntries,
+          timing,
+        } = await getLogEntryAnomalies(
           requestContext,
           sourceId,
           startTime,
@@ -55,6 +60,7 @@ export const initGetLogEntryAnomaliesRoute = ({ framework }: InfraBackendLibs) =
           body: getLogEntryAnomaliesSuccessReponsePayloadRT.encode({
             data: {
               anomalies: logEntryAnomalies,
+              hasMoreEntries,
               paginationCursors,
             },
             timing,

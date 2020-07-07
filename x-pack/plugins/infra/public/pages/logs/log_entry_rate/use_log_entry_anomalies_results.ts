@@ -71,18 +71,11 @@ export const useLogEntryAnomaliesResults = ({
           cursor: paginationCursor,
         });
       },
-      onResolve: ({ data: { anomalies, paginationCursors: requestCursors } }) => {
+      onResolve: ({ data: { anomalies, paginationCursors: requestCursors, hasMoreEntries } }) => {
         if (requestCursors) {
           setLastReceivedCursors(requestCursors);
-          if (anomalies.length < paginationOptions.pageSize) {
-            setHasNextPage(false);
-          } else {
-            setHasNextPage(true);
-          }
-        } else {
-          // No results
-          setHasNextPage(false);
         }
+        setHasNextPage(hasMoreEntries);
         setLogEntryAnomalies(anomalies);
       },
     },

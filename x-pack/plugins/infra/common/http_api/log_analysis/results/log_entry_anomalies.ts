@@ -41,6 +41,7 @@ export const getLogEntryAnomaliesSuccessReponsePayloadRT = rt.intersection([
     data: rt.intersection([
       rt.type({
         anomalies: rt.array(logEntryAnomalyRT),
+        hasMoreEntries: rt.boolean,
       }),
       rt.partial({
         paginationCursors: rt.type({

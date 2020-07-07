@@ -43,7 +43,7 @@ export const SORT_DEFAULTS = {
 };
 
 export const PAGINATION_DEFAULTS = {
-  pageSize: 2,
+  pageSize: 3,
 };
 
 export const LogEntryRateResultsContent: React.FunctionComponent = () => {
