@@ -4,7 +4,15 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-import { EuiBasicTable, EuiBasicTableColumn, EuiIcon } from '@elastic/eui';
+import {
+  EuiBasicTable,
+  EuiBasicTableColumn,
+  EuiIcon,
+  EuiFlexGroup,
+  EuiFlexItem,
+  EuiButtonIcon,
+  EuiSpacer,
+} from '@elastic/eui';
 import { RIGHT_ALIGNMENT } from '@elastic/eui/lib/services';
 import moment from 'moment';
 import { i18n } from '@kbn/i18n';
@@ -82,6 +90,7 @@ export const AnomaliesTable: React.FunctionComponent<{
   page: Page;
   fetchNextPage?: FetchNextPage;
   fetchPreviousPage?: FetchPreviousPage;
+  isLoading: boolean;
 }> = ({
   results,
   timeRange,
@@ -94,6 +103,7 @@ export const AnomaliesTable: React.FunctionComponent<{
   fetchNextPage,
   fetchPreviousPage,
   page,
+  isLoading,
 }) => {
   const [dateFormat] = useKibanaUiSetting('dateFormat', 'Y-MM-DD HH:mm:ss');
 
@@ -203,13 +213,13 @@ export const AnomaliesTable: React.FunctionComponent<{
         sorting={tableSortOptions}
         onChange={handleTableChange}
       />
-      <div>
-        {fetchPreviousPage ? (
-          <button onClick={() => fetchPreviousPage()}>Previous page</button>
-        ) : null}
-        <span>Page: {page}</span>
-        {fetchNextPage ? <button onClick={() => fetchNextPage()}>Next page</button> : null}
-      </div>
+      <EuiSpacer size="l" />
+      <PaginationControls
+        fetchNextPage={fetchNextPage}
+        fetchPreviousPage={fetchPreviousPage}
+        page={page}
+        isLoading={isLoading}
+      />
     </>
   );
 };
@@ -251,5 +261,39 @@ const AnomalyMessage = ({
     <span>
       <EuiIcon type={icon} /> {`${ratioMessage} ${message}`}
     </span>
+  );
+};
+
+const PaginationControls = ({
+  fetchPreviousPage,
+  fetchNextPage,
+  page,
+  isLoading,
+}: {
+  fetchPreviousPage?: () => void;
+  fetchNextPage?: () => void;
+  page: number;
+  isLoading: boolean;
+}) => {
+  return (
+    <EuiFlexGroup justifyContent="center">
+      <EuiFlexItem grow={false}>
+        <EuiFlexGroup>
+          <EuiButtonIcon
+            iconType="arrowLeft"
+            isDisabled={!fetchPreviousPage || isLoading}
+            onClick={fetchPreviousPage}
+          />
+          <span>
+            <strong>{page}</strong>
+          </span>
+          <EuiButtonIcon
+            iconType="arrowRight"
+            isDisabled={!fetchNextPage || isLoading}
+            onClick={fetchNextPage}
+          />
+        </EuiFlexGroup>
+      </EuiFlexItem>
+    </EuiFlexGroup>
   );
 };

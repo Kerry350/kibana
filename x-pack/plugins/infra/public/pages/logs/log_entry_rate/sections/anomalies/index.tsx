@@ -168,6 +168,7 @@ export const AnomaliesResults: React.FunctionComponent<{
               fetchNextPage={fetchNextPage}
               fetchPreviousPage={fetchPreviousPage}
               page={page}
+              isLoading={isLoading}
             />
           </>
         )}

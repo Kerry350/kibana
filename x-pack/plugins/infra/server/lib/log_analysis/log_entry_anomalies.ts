@@ -13,6 +13,7 @@ import { Sort, Pagination } from '../../../common/http_api/log_analysis';
 import type { MlSystem } from '../../types';
 import { createLogEntryAnomaliesQuery, logEntryAnomaliesResponseRT } from './queries';
 import { decodeOrThrow } from '../../../common/runtime_types';
+import { InsufficientAnomalyMlJobsConfigured } from './errors';
 
 export async function getLogEntryAnomalies(
   context: RequestHandlerContext & { infra: Required<InfraRequestHandlerContext> },
@@ -52,6 +53,12 @@ export async function getLogEntryAnomalies(
     jobSpans = [...jobSpans, ...spans];
   } catch (e) {
     // Job wasn't found
+  }
+
+  if (jobIds.length === 0) {
+    throw new InsufficientAnomalyMlJobsConfigured(
+      'Log rate or categorisation ML jobs need to be configured to search anomalies'
+    );
   }
 
   const {
@@ -112,13 +119,6 @@ async function fetchLogEntryAnomalies(
   sort: Sort,
   pagination: Pagination
 ) {
-  if (jobIds.length === 0) {
-    return {
-      anomalies: [],
-      timing: { spans: [] },
-    };
-  }
-
   // We'll request 1 extra entry on top of our pageSize to determine if there are
   // more entries to be fetched. This avoids scenarios where the client side can't
   // determine if entries.length === pageSize actually means there are more entries / next page

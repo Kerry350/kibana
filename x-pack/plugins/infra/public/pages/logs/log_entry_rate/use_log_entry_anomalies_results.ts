@@ -46,7 +46,7 @@ export const useLogEntryAnomaliesResults = ({
   );
   // Cursor from the last request
   const [lastReceivedCursors, setLastReceivedCursors] = useState<PaginationCursors | undefined>();
-  // Cursor to use for the next request
+  // Cursor to use for the next request. For the first request, and therefore not paging, this will be undefined.
   const [paginationCursor, setPaginationCursor] = useState<Pagination['cursor'] | undefined>(
     undefined
   );
@@ -75,7 +75,14 @@ export const useLogEntryAnomaliesResults = ({
         if (requestCursors) {
           setLastReceivedCursors(requestCursors);
         }
-        setHasNextPage(hasMoreEntries);
+        // Check if we have more "next" entries. "Page" covers the "previous" scenario,
+        // since we need to know the page we're on anyway.
+        if (!paginationCursor || (paginationCursor && 'searchAfter' in paginationCursor)) {
+          setHasNextPage(hasMoreEntries);
+        } else if (paginationCursor && 'searchBefore' in paginationCursor) {
+          // We've requested a previous page, therefore there is a next page.
+          setHasNextPage(true);
+        }
         setLogEntryAnomalies(anomalies);
       },
     },

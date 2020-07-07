@@ -41,11 +41,16 @@ export const getLogEntryAnomaliesSuccessReponsePayloadRT = rt.intersection([
     data: rt.intersection([
       rt.type({
         anomalies: rt.array(logEntryAnomalyRT),
+        // Signifies there are more entries backwards or forwards. If this was a request
+        // for a previous page, there are more previous pages, if this was a request for a next page,
+        // there are more next pages.
         hasMoreEntries: rt.boolean,
       }),
       rt.partial({
         paginationCursors: rt.type({
+          // The cursor to use to fetch the previous page
           previousPageCursor: paginationCursorRT,
+          // The cursor to use to fetch the next page
           nextPageCursor: paginationCursorRT,
         }),
       }),
