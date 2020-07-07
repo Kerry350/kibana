@@ -4,7 +4,7 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-import { EuiBasicTable, EuiBasicTableColumn } from '@elastic/eui';
+import { EuiBasicTable, EuiBasicTableColumn, EuiIcon } from '@elastic/eui';
 import { RIGHT_ALIGNMENT } from '@elastic/eui/lib/services';
 import moment from 'moment';
 import { i18n } from '@kbn/i18n';
@@ -14,6 +14,7 @@ import { TimeRange } from '../../../../../../common/http_api/shared/time_range';
 import {
   formatAnomalyScore,
   getFriendlyNameForPartitionId,
+  formatOneDecimalPlace,
 } from '../../../../../../common/log_analysis';
 import { RowExpansionButton } from '../../../../../components/basic_table';
 import { AnomaliesTableExpandedRow } from './expanded_row';
@@ -35,8 +36,10 @@ interface TableItem {
   dataset: string;
   datasetName: string;
   anomalyScore: number;
-  anomalyMessage: string;
   startTime: number;
+  typical: number;
+  actual: number;
+  type: string;
 }
 
 const anomalyScoreColumnName = i18n.translate(
@@ -66,26 +69,6 @@ const datasetColumnName = i18n.translate(
     defaultMessage: 'Dataset',
   }
 );
-
-const moreThanExpectedAnomalyMessage = i18n.translate(
-  'xpack.infra.logs.analysis.anomaliesTableMoreThanExpectedAnomalyMessage',
-  {
-    defaultMessage: 'More log messages in this dataset than expected',
-  }
-);
-
-const fewerThanExpectedAnomalyMessage = i18n.translate(
-  'xpack.infra.logs.analysis.anomaliesTableFewerThanExpectedAnomalyMessage',
-  {
-    defaultMessage: 'Fewer log messages in this dataset than expected',
-  }
-);
-
-const getAnomalyMessage = (actualRate: number, typicalRate: number): string => {
-  return actualRate < typicalRate
-    ? fewerThanExpectedAnomalyMessage
-    : moreThanExpectedAnomalyMessage;
-};
 
 export const AnomaliesTable: React.FunctionComponent<{
   results: LogEntryAnomalies;
@@ -127,8 +110,10 @@ export const AnomaliesTable: React.FunctionComponent<{
         dataset: anomaly.dataset,
         datasetName: getFriendlyNameForPartitionId(anomaly.dataset),
         anomalyScore: formatAnomalyScore(anomaly.anomalyScore),
-        anomalyMessage: getAnomalyMessage(anomaly.actual, anomaly.typical),
         startTime: anomaly.startTime,
+        type: anomaly.type,
+        typical: anomaly.typical,
+        actual: anomaly.actual,
       };
     });
   }, [results]);
@@ -169,10 +154,11 @@ export const AnomaliesTable: React.FunctionComponent<{
         render: (anomalyScore: number) => <AnomalySeverityIndicator anomalyScore={anomalyScore} />,
       },
       {
-        field: 'anomalyMessage',
         name: anomalyMessageColumnName,
-        sortable: false,
         truncateText: true,
+        render: (item: TableItem) => (
+          <AnomalyMessage actual={item.actual} typical={item.typical} type={item.type} />
+        ),
       },
       {
         field: 'startTime',
@@ -225,5 +211,45 @@ export const AnomaliesTable: React.FunctionComponent<{
         {fetchNextPage ? <button onClick={() => fetchNextPage()}>Next page</button> : null}
       </div>
     </>
+  );
+};
+
+const AnomalyMessage = ({
+  actual,
+  typical,
+  type,
+}: {
+  actual: number;
+  typical: number;
+  type: string;
+}) => {
+  const messageType = type === 'logRate' ? 'dataset' : 'category';
+  const moreThanExpectedAnomalyMessage = i18n.translate(
+    'xpack.infra.logs.analysis.anomaliesTableMoreThanExpectedAnomalyMessage',
+    {
+      defaultMessage: 'higher log messages in this {messageType} than expected',
+      values: { messageType },
+    }
+  );
+
+  const fewerThanExpectedAnomalyMessage = i18n.translate(
+    'xpack.infra.logs.analysis.anomaliesTableFewerThanExpectedAnomalyMessage',
+    {
+      defaultMessage: 'fewer log messages in this {messageType} than expected',
+      values: { messageType },
+    }
+  );
+  const isMore = actual > typical;
+  const message = isMore ? moreThanExpectedAnomalyMessage : fewerThanExpectedAnomalyMessage;
+  const ratio = isMore ? actual / typical : typical / actual;
+  const icon = isMore ? 'sortUp' : 'sortDown';
+  // Edge case scenarios where actual and typical might sit at 0.
+  const useRatio = ratio !== Infinity;
+  const ratioMessage = useRatio ? `${formatOneDecimalPlace(ratio)}x` : '';
+
+  return (
+    <span>
+      <EuiIcon type={icon} /> {`${ratioMessage} ${message}`}
+    </span>
   );
 };
