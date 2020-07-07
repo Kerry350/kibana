@@ -21,7 +21,6 @@ import { getAnnotationsForAll, getLogEntryRateCombinedSeries } from '../helpers/
 import { AnomaliesChart } from './chart';
 import { AnomaliesTable } from './table';
 import { RecreateJobButton } from '../../../../../components/logging/log_analysis_job_status';
-import { AnalyzeInMlButton } from '../../../../../components/logging/log_analysis_results';
 import { LoadingOverlayWrapper } from '../../../../../components/loading_overlay_wrapper';
 import {
   Page,
@@ -96,15 +95,12 @@ export const AnomaliesResults: React.FunctionComponent<{
     <>
       <EuiFlexGroup alignItems="center" gutterSize="s">
         <EuiFlexItem>
-          <EuiTitle size="s" aria-label={title}>
-            <h2>{title}</h2>
+          <EuiTitle size="m" aria-label={title}>
+            <h1>{title}</h1>
           </EuiTitle>
         </EuiFlexItem>
         <EuiFlexItem grow={false}>
           <RecreateJobButton onClick={viewSetupForReconfiguration} size="s" />
-        </EuiFlexItem>
-        <EuiFlexItem grow={false}>
-          <AnalyzeInMlButton jobId={jobId} timeRange={timeRange} />
         </EuiFlexItem>
       </EuiFlexGroup>
       <EuiSpacer size="m" />

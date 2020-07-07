@@ -26,7 +26,6 @@ import { LogAnalysisJobProblemIndicator } from '../../../components/logging/log_
 import { useInterval } from '../../../hooks/use_interval';
 import { useKibanaUiSetting } from '../../../utils/use_kibana_ui_setting';
 import { AnomaliesResults } from './sections/anomalies';
-import { LogRateResults } from './sections/log_rate';
 import { useLogEntryRateModuleContext } from './use_log_entry_rate_module';
 import { useLogEntryRateResults } from './use_log_entry_rate_results';
 import { useLogEntryAnomaliesResults } from './use_log_entry_anomalies_results';
@@ -193,45 +192,18 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     <ResultsContentPage>
       <EuiFlexGroup direction="column">
         <EuiFlexItem grow={false}>
-          <EuiPanel paddingSize="m">
-            <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
-              <EuiFlexItem grow={false}>
-                {logEntryRate ? (
-                  <LoadingOverlayWrapper isLoading={isLoading}>
-                    <EuiText size="s">
-                      <FormattedMessage
-                        id="xpack.infra.logs.analysis.logRateResultsToolbarText"
-                        defaultMessage="Analyzed {numberOfLogs} log entries from {startTime} to {endTime}"
-                        values={{
-                          numberOfLogs: (
-                            <EuiBadge color="primary">
-                              <EuiText size="s" color="ghost">
-                                {numeral(logEntryRate.totalNumberOfLogEntries).format('0.00a')}
-                              </EuiText>
-                            </EuiBadge>
-                          ),
-                          startTime: (
-                            <b>{moment(queryTimeRange.value.startTime).format(dateFormat)}</b>
-                          ),
-                          endTime: <b>{moment(queryTimeRange.value.endTime).format(dateFormat)}</b>,
-                        }}
-                      />
-                    </EuiText>
-                  </LoadingOverlayWrapper>
-                ) : null}
-              </EuiFlexItem>
-              <EuiFlexItem grow={false}>
-                <EuiSuperDatePicker
-                  start={selectedTimeRange.startTime}
-                  end={selectedTimeRange.endTime}
-                  onTimeChange={handleSelectedTimeRangeChange}
-                  isPaused={autoRefresh.isPaused}
-                  refreshInterval={autoRefresh.interval}
-                  onRefreshChange={handleAutoRefreshChange}
-                />
-              </EuiFlexItem>
-            </EuiFlexGroup>
-          </EuiPanel>
+          <EuiFlexGroup justifyContent="flexEnd">
+            <EuiFlexItem grow={false}>
+              <EuiSuperDatePicker
+                start={selectedTimeRange.startTime}
+                end={selectedTimeRange.endTime}
+                onTimeChange={handleSelectedTimeRangeChange}
+                isPaused={autoRefresh.isPaused}
+                refreshInterval={autoRefresh.interval}
+                onRefreshChange={handleAutoRefreshChange}
+              />
+            </EuiFlexItem>
+          </EuiFlexGroup>
         </EuiFlexItem>
         <EuiFlexItem grow={false}>
           <LogAnalysisJobProblemIndicator
@@ -242,16 +214,6 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
             onRecreateMlJobForReconfiguration={viewSetupForReconfiguration}
             onRecreateMlJobForUpdate={viewSetupForUpdate}
           />
-        </EuiFlexItem>
-        <EuiFlexItem grow={false}>
-          <EuiPanel paddingSize="m">
-            <LogRateResults
-              isLoading={isLoading}
-              results={logEntryRate}
-              setTimeRange={handleChartTimeRangeChange}
-              timeRange={queryTimeRange.value}
-            />
-          </EuiPanel>
         </EuiFlexItem>
         <EuiFlexItem grow={false}>
           <EuiPanel paddingSize="m">
