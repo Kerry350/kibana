@@ -6,10 +6,9 @@
 
 import { EuiFlexGroup, EuiFlexItem, EuiButtonEmpty } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
-import React from 'react';
+import React, { useEffect, useState, useCallback} from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { useMount } from 'react-use';
-
 import { useKibana } from '../../../../../../src/plugins/kibana_react/public';
 import { DocumentTitle } from '../../components/document_title';
 import { Header } from '../../components/header';
@@ -24,6 +23,45 @@ import { LogEntryRatePage } from './log_entry_rate';
 import { LogsSettingsPage } from './settings';
 import { StreamPage } from './stream';
 import { AlertDropdown } from '../../components/alerting/logs/alert_dropdown';
+import { LogEntriesQueries } from '../../../server/search_strategy/provider';
+
+const SearchStrategyTest = () => {
+  const abortController = new AbortController();
+  const { services: { data } } = useKibana();
+  const [response, setResponse] = useState({});
+  const [request, setRequest] = useState({queryType: LogEntriesQueries.item});
+
+  // NOTE: This is just a rough example. Cancellation and abort signals are not handled properly here,
+  // we'd need to handle getData being called more than once, we'd also need to make this all hook-centric.
+  // This is primarily to show how we'd use our search strategy, and how we'd handle partial results and errors etc.
+  const getData = useCallback((request) => {
+    const searchSubscription$ = data.search.search<any, any>({queryType: LogEntriesQueries.item}, {
+      strategy: 'infraSearchStrategy',
+      signal: abortController.signal,
+    })
+    .subscribe({
+      next: (response) => {
+        const { isPartial, isRunning } = response;
+        // Set partial results
+        setResponse(response);
+        if (!isPartial && !isRunning) {
+          // We have all results
+          searchSubscription$.unsubscribe();
+        } else if (isPartial && !isRunning) {
+          // Something went wrong
+        }
+      }
+    });
+  }, [data.search]);
+
+  useEffect(() => {
+    getData(request);
+  }, [request])
+
+  return (
+    <div>{JSON.stringify(response,null,'\t')}</div>
+  )
+};
 
 export const LogsPageContent: React.FunctionComponent = () => {
   const uiCapabilities = useKibana().services.application?.capabilities;
@@ -77,7 +115,11 @@ export const LogsPageContent: React.FunctionComponent = () => {
       <AppNavigation aria-label={pageTitle}>
         <EuiFlexGroup gutterSize={'none'} alignItems={'center'}>
           <EuiFlexItem>
-            <RoutedTabs tabs={[streamTab, anomaliesTab, logCategoriesTab, settingsTab]} />
+            <RoutedTabs tabs={[streamTab, anomaliesTab, logCategoriesTab, settingsTab, {
+               app: 'logs',
+               title: 'Search strategy test',
+               pathname: '/search-strategy',
+            }]} />
           </EuiFlexItem>
           <EuiFlexItem grow={false}>
             <AlertDropdown />
@@ -99,6 +141,7 @@ export const LogsPageContent: React.FunctionComponent = () => {
         <Route path={anomaliesTab.pathname} component={LogEntryRatePage} />
         <Route path={logCategoriesTab.pathname} component={LogEntryCategoriesPage} />
         <Route path={settingsTab.pathname} component={LogsSettingsPage} />
+        <Route path={'/search-strategy'} component={SearchStrategyTest} />
         <RedirectWithQueryParams from={'/analysis'} to={anomaliesTab.pathname} exact />
         <RedirectWithQueryParams from={'/log-rate'} to={anomaliesTab.pathname} exact />
         <RedirectWithQueryParams from={'/'} to={streamTab.pathname} exact />

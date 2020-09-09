@@ -31,6 +31,7 @@ import { infraSourceConfigurationSavedObjectType } from './lib/sources';
 import { metricsExplorerViewSavedObjectType } from '../common/saved_objects/metrics_explorer_view';
 import { inventoryViewSavedObjectType } from '../common/saved_objects/inventory_view';
 import { InfraRequestHandlerContext } from './types';
+import { infraSearchStrategyProvider } from './search_strategy/provider';
 
 export const config = {
   schema: schema.object({
@@ -166,7 +167,15 @@ export class InfraServerPlugin {
 
     // Telemetry
     UsageCollector.registerUsageCollector(plugins.usageCollection);
-
+    
+    // Register custom search strategy
+    core.getStartServices().then(([_, startPlugins]) => {
+      const infraSearchStrategy = infraSearchStrategyProvider(startPlugins.data);
+      plugins.data.search.registerSearchStrategy(
+        'infraSearchStrategy',
+        infraSearchStrategy
+      );
+    });
     return {
       defineInternalSourceConfiguration(sourceId, sourceProperties) {
         sources.defineInternalSourceConfiguration(sourceId, sourceProperties);

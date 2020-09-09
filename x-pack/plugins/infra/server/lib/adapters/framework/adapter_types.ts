@@ -15,6 +15,7 @@ import { PluginSetupContract as FeaturesPluginSetup } from '../../../../../../pl
 import { SpacesPluginSetup } from '../../../../../../plugins/spaces/server';
 import { PluginSetupContract as AlertingPluginContract } from '../../../../../alerts/server';
 import { MlPluginSetup } from '../../../../../ml/server';
+import { DataPluginSetup, DataPluginStart } from '../../../../../../../src/plugins/data/server/plugin';
 
 export interface InfraServerPluginDeps {
   home: HomeServerPluginSetup;
@@ -25,6 +26,7 @@ export interface InfraServerPluginDeps {
   apm: APMPluginSetup;
   alerts: AlertingPluginContract;
   ml?: MlPluginSetup;
+  data: DataPluginSetup;
 }
 
 export interface CallWithRequestParams extends GenericParams {
