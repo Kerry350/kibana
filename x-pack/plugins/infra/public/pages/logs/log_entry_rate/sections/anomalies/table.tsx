@@ -181,7 +181,7 @@ export const AnomaliesTable: React.FunctionComponent<{
         render: (startTime: number) => moment(startTime).format(dateFormat),
       },
       {
-        field: 'datasetName',
+        field: 'dataset',
         name: datasetColumnName,
         sortable: true,
         truncateText: true,

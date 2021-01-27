@@ -32,6 +32,7 @@ import { useInterval } from '../../../hooks/use_interval';
 import { AnomaliesResults } from './sections/anomalies';
 import { useLogEntryAnomaliesResults } from './use_log_entry_anomalies_results';
 import { useLogEntryRateResults } from './use_log_entry_rate_results';
+import { useDatasetFiltering } from './use_dataset_filtering';
 import {
   StringTimeRange,
   useLogAnalysisResultsUrlState,
@@ -47,6 +48,7 @@ export const PAGINATION_DEFAULTS = {
 };
 
 export const LogEntryRateResultsContent: React.FunctionComponent = () => {
+  console.log('re-render whole page');
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results' });
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results', delay: 15000 });
   const navigateToApp = useKibana().services.application?.navigateToApp;
@@ -121,7 +123,7 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     [queryTimeRange.value.endTime, queryTimeRange.value.startTime]
   );
 
-  const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
+  const { selectedDatasets, setSelectedDatasets, selectedDatasetsFilters } = useDatasetFiltering();
 
   const { getLogEntryRate, isLoading, logEntryRate } = useLogEntryRateResults({
     sourceId,
@@ -176,16 +178,13 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     [setSelectedTimeRange, handleQueryTimeRangeChange]
   );
 
-  const handleChartTimeRangeChange = useCallback(
-    ({ startTime, endTime }: TimeRange) => {
-      handleSelectedTimeRangeChange({
-        end: new Date(endTime).toISOString(),
-        isInvalid: false,
-        start: new Date(startTime).toISOString(),
-      });
-    },
-    [handleSelectedTimeRangeChange]
-  );
+  useEffect(() => {
+    console.log('selected time range changed');
+    handleQueryTimeRangeChange({
+      start: selectedTimeRange.startTime,
+      end: selectedTimeRange.endTime,
+    });
+  }, [selectedTimeRange, handleQueryTimeRangeChange]);
 
   const handleAutoRefreshChange = useCallback(
     ({ isPaused, refreshInterval: interval }: { isPaused: boolean; refreshInterval: number }) => {
@@ -291,8 +290,8 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
                 onViewModuleList={showModuleList}
                 logEntryRateResults={logEntryRate}
                 anomalies={logEntryAnomalies}
-                setTimeRange={handleChartTimeRangeChange}
                 timeRange={queryTimeRange.value}
+                stringTimeRange={selectedTimeRange}
                 page={page}
                 fetchNextPage={fetchNextPage}
                 fetchPreviousPage={fetchPreviousPage}
@@ -300,6 +299,7 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
                 changePaginationOptions={changePaginationOptions}
                 sortOptions={sortOptions}
                 paginationOptions={paginationOptions}
+                selectedDatasets={selectedDatasets}
               />
             </EuiPanel>
           </EuiFlexItem>

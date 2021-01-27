@@ -4,11 +4,11 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import useUpdateEffect from 'react-use/lib/useUpdateEffect';
 import useMount from 'react-use/lib/useMount';
-
+import { Subscription } from 'rxjs';
 import { useKibanaContextForPlugin } from './use_kibana';
 import { TimeRange, TimefilterContract } from '../../../../../src/plugins/data/public';
 
@@ -28,8 +28,27 @@ export const useKibanaTimefilterTime = ({
   return [getTime, services.data.query.timefilter.timefilter.setTime];
 };
 
-export const useSyncKibanaTimeFilterTime = (defaults: TimeRange, currentTimeRange: TimeRange) => {
-  const [, setTime] = useKibanaTimefilterTime(defaults);
+/**
+ * Handles one or two way syncing with the Kibana time filter service.
+ *
+ * For one way syncing the time range will be synced back to the time filter service
+ * on mount *if* it differs from the defaults, e.g. a URL param.
+ * Future updates, after mount, will also be synced back to the time filter service.
+ *
+ * For two way syncing, in addition to the above, changes *from* the time filter service
+ * will be sycned to the solution, e.g. there might be an embeddable on the page that
+ * fires an action that hooks into the time filter service.
+ */
+export const useSyncKibanaTimeFilterTime = (
+  defaults: TimeRange,
+  currentTimeRange: TimeRange,
+  setTimeRange?: (timeRange: TimeRange) => void
+) => {
+  const { services } = useKibanaContextForPlugin();
+  const [subs, setSubs] = useState<Subscription[]>([]);
+  const timeUpdate$ = services.data.query.timefilter.timefilter.getTimeUpdate$();
+
+  const [getTime, setTime] = useKibanaTimefilterTime(defaults);
 
   // On first mount we only want to sync time with Kibana if the derived currentTimeRange (e.g. from URL params)
   // differs from our defaults.
@@ -39,8 +58,28 @@ export const useSyncKibanaTimeFilterTime = (defaults: TimeRange, currentTimeRang
     }
   });
 
-  // Sync explicit changes *after* mount back to Kibana
+  // Sync explicit changes *after* mount from the solution back to Kibana
   useUpdateEffect(() => {
     setTime({ from: currentTimeRange.from, to: currentTimeRange.to });
   }, [currentTimeRange.from, currentTimeRange.to, setTime]);
+
+  // *Optionally* sync time filter service changes back to the solution.
+  // For example, an embeddable might have a time range action that hooks into
+  // the time filter service.
+  useEffect(() => {
+    const sub = timeUpdate$.subscribe(() => {
+      console.log('time uodate has changed');
+      console.log('change');
+      if (setTimeRange) {
+        const timeRange = getTime();
+        setTimeRange(timeRange);
+      }
+    });
+
+    setSubs([...subs, sub]);
+
+    return () => {
+      subs.forEach((sub) => sub.unsubscribe());
+    };
+  }, [getTime, setTimeRange, setSubs]);
 };

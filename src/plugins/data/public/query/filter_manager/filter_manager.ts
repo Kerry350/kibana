@@ -121,6 +121,7 @@ export class FilterManager {
     filters: Filter[] | Filter,
     pinFilterStatus: boolean = this.uiSettings.get(UI_SETTINGS.FILTERS_PINNED_BY_DEFAULT)
   ) {
+    console.log('hello add filters');
     if (!Array.isArray(filters)) {
       filters = [filters];
     }
@@ -132,7 +133,6 @@ export class FilterManager {
     const store = pinFilterStatus ? FilterStateStore.GLOBAL_STATE : FilterStateStore.APP_STATE;
 
     FilterManager.setFiltersStore(filters, store);
-
     const mappedFilters = mapAndFlattenFilters(filters);
 
     // This is where we add new filters to the correct place (app \ global)

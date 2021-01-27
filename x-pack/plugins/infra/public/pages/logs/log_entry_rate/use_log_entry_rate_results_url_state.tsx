@@ -4,10 +4,13 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
+import { useCallback, useEffect, useMemo } from 'react';
+import useObservable from 'react-use/lib/useObservable';
 import { fold } from 'fp-ts/lib/Either';
 import { constant, identity } from 'fp-ts/lib/function';
 import { pipe } from 'fp-ts/lib/pipeable';
 import * as rt from 'io-ts';
+import { TimeRange, TimefilterContract } from '../../../../../../../src/plugins/data/public';
 
 import { useUrlState } from '../../../utils/use_url_state';
 import {
@@ -39,19 +42,42 @@ export const useLogAnalysisResultsUrlState = () => {
   const [getTime] = useKibanaTimefilterTime(TIME_DEFAULTS);
   const { from: start, to: end } = getTime();
 
-  const [timeRange, setTimeRange] = useUrlState({
-    defaultState: {
+  const defaultTimeRangeState = useMemo(() => {
+    return {
       startTime: start,
       endTime: end,
+    };
+  }, [start, end]);
+
+  const decodeTimeRangeUrlState = useCallback(
+    (value: unknown) => {
+      return pipe(urlTimeRangeRT.decode(value), fold(constant(undefined), identity));
     },
-    decodeUrlState: (value: unknown) =>
-      pipe(urlTimeRangeRT.decode(value), fold(constant(undefined), identity)),
+    [urlTimeRangeRT.decode]
+  );
+
+  const [timeRange, setTimeRange] = useUrlState({
+    defaultState: defaultTimeRangeState,
+    decodeUrlState: decodeTimeRangeUrlState,
     encodeUrlState: urlTimeRangeRT.encode,
     urlStateKey: TIME_RANGE_URL_STATE_KEY,
     writeDefaultState: true,
   });
 
-  useSyncKibanaTimeFilterTime(TIME_DEFAULTS, { from: timeRange.startTime, to: timeRange.endTime });
+  const handleTimeFilterChange = useCallback(
+    (timeRange: TimeRange) => {
+      const { from, to } = timeRange;
+      // TODO: Check if different so time filter doesn't need to
+      setTimeRange({ startTime: from, endTime: to });
+    },
+    [setTimeRange]
+  );
+
+  useSyncKibanaTimeFilterTime(
+    TIME_DEFAULTS,
+    { from: timeRange.startTime, to: timeRange.endTime },
+    handleTimeFilterChange
+  );
 
   const [autoRefresh, setAutoRefresh] = useUrlState({
     defaultState: {

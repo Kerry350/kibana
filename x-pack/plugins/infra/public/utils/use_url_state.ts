@@ -37,18 +37,19 @@ export const useUrlState = <State>({
     return getParamFromQueryString(queryString, urlStateKey);
   }, [queryString, urlStateKey]);
 
-  const decodedState = useMemo(() => decodeUrlState(decodeRisonUrlState(urlStateString)), [
-    decodeUrlState,
-    urlStateString,
-  ]);
+  const decodedState = useMemo(() => {
+    console.log('in decoded state');
+    return decodeUrlState(decodeRisonUrlState(urlStateString));
+  }, [decodeUrlState, urlStateString]);
 
-  const state = useMemo(() => (typeof decodedState !== 'undefined' ? decodedState : defaultState), [
-    defaultState,
-    decodedState,
-  ]);
+  const state = useMemo(() => {
+    console.log('in state');
+    return typeof decodedState !== 'undefined' ? decodedState : defaultState;
+  }, [defaultState, decodedState]);
 
   const setState = useCallback(
     (newState: State | undefined) => {
+      console.log('set state');
       if (!history || !history.location) {
         return;
       }

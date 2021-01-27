@@ -48,6 +48,8 @@ export const AnomaliesResults: React.FunctionComponent<{
   changePaginationOptions: ChangePaginationOptions;
   sortOptions: SortOptions;
   paginationOptions: PaginationOptions;
+  stringTimeRange: any;
+  selectedDatasets: any;
 }> = ({
   isLoadingLogRateResults,
   isLoadingAnomaliesResults,
@@ -63,6 +65,8 @@ export const AnomaliesResults: React.FunctionComponent<{
   fetchNextPage,
   fetchPreviousPage,
   page,
+  stringTimeRange,
+  selectedDatasets,
 }) => {
   const logEntryRateSeries = useMemo(
     () =>
@@ -132,10 +136,11 @@ export const AnomaliesResults: React.FunctionComponent<{
                 chartId="overall"
                 isLoading={isLoadingLogRateResults}
                 setTimeRange={setTimeRange}
-                timeRange={timeRange}
+                timeRange={stringTimeRange}
                 series={logEntryRateSeries}
                 annotations={anomalyAnnotations}
                 renderAnnotationTooltip={renderAnnotationTooltip}
+                selectedDatasets={selectedDatasets}
               />
             </EuiFlexItem>
           </EuiFlexGroup>

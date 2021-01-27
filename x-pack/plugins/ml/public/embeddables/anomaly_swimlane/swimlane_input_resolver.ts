@@ -233,6 +233,7 @@ export function useSwimlaneInputResolver(
 }
 
 export function processFilters(filters: Filter[], query: Query) {
+  console.log(filters, query);
   const inputQuery =
     query.language === 'kuery'
       ? esKuery.toElasticsearchQuery(esKuery.fromKueryExpression(query.query as string))
