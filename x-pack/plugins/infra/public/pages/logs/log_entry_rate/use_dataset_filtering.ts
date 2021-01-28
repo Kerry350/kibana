@@ -58,10 +58,8 @@ export const useDatasetFiltering = () => {
   // NOTE: The anomaly swimlane embeddable will communicate it's filter action
   // changes via the filterManager service.
   useEffect(() => {
-    console.log('running dataset effect');
     const filterUpdated$ = services.data.query.filterManager.getUpdates$();
     const sub = filterUpdated$.subscribe(() => {
-      console.log('hi?');
       const filters = services.data.query.filterManager
         .getFilters()
         .filter(

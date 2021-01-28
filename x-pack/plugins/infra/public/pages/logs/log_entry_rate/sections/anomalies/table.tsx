@@ -85,7 +85,6 @@ const datasetColumnName = i18n.translate(
 
 export const AnomaliesTable: React.FunctionComponent<{
   results: LogEntryAnomalies;
-  setTimeRange: (timeRange: TimeRange) => void;
   timeRange: TimeRange;
   changeSortOptions: ChangeSortOptions;
   changePaginationOptions: ChangePaginationOptions;
@@ -98,7 +97,6 @@ export const AnomaliesTable: React.FunctionComponent<{
 }> = ({
   results,
   timeRange,
-  setTimeRange,
   changeSortOptions,
   sortOptions,
   changePaginationOptions,

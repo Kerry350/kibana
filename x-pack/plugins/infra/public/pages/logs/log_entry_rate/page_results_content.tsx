@@ -10,11 +10,10 @@ import moment from 'moment';
 import { stringify } from 'query-string';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { encode, RisonValue } from 'rison-node';
-import { useKibana } from '../../../../../../../src/plugins/kibana_react/public';
 import { euiStyled } from '../../../../../../../src/plugins/kibana_react/common';
+import { useKibana } from '../../../../../../../src/plugins/kibana_react/public';
 import { useTrackPageview } from '../../../../../observability/public';
 import { TimeRange } from '../../../../common/time/time_range';
-import { bucketSpan } from '../../../../common/log_analysis';
 import { TimeKey } from '../../../../common/time';
 import {
   CategoryJobNoticesSection,
@@ -31,7 +30,6 @@ import { useLogSourceContext } from '../../../containers/logs/log_source';
 import { useInterval } from '../../../hooks/use_interval';
 import { AnomaliesResults } from './sections/anomalies';
 import { useLogEntryAnomaliesResults } from './use_log_entry_anomalies_results';
-import { useLogEntryRateResults } from './use_log_entry_rate_results';
 import { useDatasetFiltering } from './use_dataset_filtering';
 import {
   StringTimeRange,
@@ -48,7 +46,6 @@ export const PAGINATION_DEFAULTS = {
 };
 
 export const LogEntryRateResultsContent: React.FunctionComponent = () => {
-  console.log('re-render whole page');
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results' });
   useTrackPageview({ app: 'infra_logs', path: 'log_entry_rate_results', delay: 15000 });
   const navigateToApp = useKibana().services.application?.navigateToApp;
@@ -63,6 +60,7 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     hasStoppedJobs: hasStoppedLogEntryRateJobs,
     moduleDescriptor: logEntryRateModuleDescriptor,
     setupStatus: logEntryRateSetupStatus,
+    jobIds: logEntryRateJobIds,
   } = useLogEntryRateModuleContext();
 
   const {
@@ -72,7 +70,16 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     hasStoppedJobs: hasStoppedLogEntryCategoriesJobs,
     moduleDescriptor: logEntryCategoriesModuleDescriptor,
     setupStatus: logEntryCategoriesSetupStatus,
+    jobIds: logEntryCategoriesJobIds,
   } = useLogEntryCategoriesModuleContext();
+
+  const jobIds = useMemo(
+    () => [
+      logEntryRateJobIds['log-entry-rate'],
+      logEntryCategoriesJobIds['log-entry-categories-count'],
+    ],
+    [logEntryRateJobIds, logEntryCategoriesJobIds]
+  );
 
   const {
     timeRange: selectedTimeRange,
@@ -118,20 +125,7 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     [queryTimeRange, navigateToApp]
   );
 
-  const bucketDuration = useMemo(
-    () => getBucketDuration(queryTimeRange.value.startTime, queryTimeRange.value.endTime),
-    [queryTimeRange.value.endTime, queryTimeRange.value.startTime]
-  );
-
-  const { selectedDatasets, setSelectedDatasets, selectedDatasetsFilters } = useDatasetFiltering();
-
-  const { getLogEntryRate, isLoading, logEntryRate } = useLogEntryRateResults({
-    sourceId,
-    startTime: queryTimeRange.value.startTime,
-    endTime: queryTimeRange.value.endTime,
-    bucketDuration,
-    filteredDatasets: selectedDatasets,
-  });
+  const { selectedDatasets, setSelectedDatasets } = useDatasetFiltering();
 
   const {
     isLoadingLogEntryAnomalies,
@@ -179,7 +173,6 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
   );
 
   useEffect(() => {
-    console.log('selected time range changed');
     handleQueryTimeRangeChange({
       start: selectedTimeRange.startTime,
       end: selectedTimeRange.endTime,
@@ -205,7 +198,6 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
     showModuleSetup,
   ]);
 
-  const hasLogRateResults = (logEntryRate?.histogramBuckets?.length ?? 0) > 0;
   const hasAnomalyResults = logEntryAnomalies.length > 0;
 
   const isFirstUse = useMemo(
@@ -215,13 +207,9 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
         logEntryCategoriesSetupStatus.type === 'succeeded' ||
         (logEntryRateSetupStatus.type === 'skipped' && !!logEntryRateSetupStatus.newlyCreated) ||
         logEntryRateSetupStatus.type === 'succeeded') &&
-      !(hasLogRateResults || hasAnomalyResults),
-    [hasAnomalyResults, hasLogRateResults, logEntryCategoriesSetupStatus, logEntryRateSetupStatus]
+      !hasAnomalyResults,
+    [hasAnomalyResults, logEntryCategoriesSetupStatus, logEntryRateSetupStatus]
   );
-
-  useEffect(() => {
-    getLogEntryRate();
-  }, [getLogEntryRate, selectedDatasets, queryTimeRange.lastChangedTime]);
 
   useInterval(
     () => {
@@ -285,10 +273,8 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
           <EuiFlexItem grow={false}>
             <EuiPanel paddingSize="m">
               <AnomaliesResults
-                isLoadingLogRateResults={isLoading}
                 isLoadingAnomaliesResults={isLoadingLogEntryAnomalies}
                 onViewModuleList={showModuleList}
-                logEntryRateResults={logEntryRate}
                 anomalies={logEntryAnomalies}
                 timeRange={queryTimeRange.value}
                 stringTimeRange={selectedTimeRange}
@@ -300,6 +286,8 @@ export const LogEntryRateResultsContent: React.FunctionComponent = () => {
                 sortOptions={sortOptions}
                 paginationOptions={paginationOptions}
                 selectedDatasets={selectedDatasets}
+                jobIds={jobIds}
+                autoRefresh={autoRefresh}
               />
             </EuiPanel>
           </EuiFlexItem>
@@ -330,23 +318,6 @@ const stringToNumericTimeRange = (timeRange: StringTimeRange): TimeRange => ({
     })
   ).valueOf(),
 });
-
-/**
- * This function takes the current time range in ms,
- * works out the bucket interval we'd need to always
- * display 100 data points, and then takes that new
- * value and works out the nearest multiple of
- * 900000 (15 minutes) to it, so that we don't end up with
- * jaggy bucket boundaries between the ML buckets and our
- * aggregation buckets.
- */
-const getBucketDuration = (startTime: number, endTime: number) => {
-  const msRange = moment(endTime).diff(moment(startTime));
-  const bucketIntervalInMs = msRange / 100;
-  const result = bucketSpan * Math.round(bucketIntervalInMs / bucketSpan);
-  const roundedResult = parseInt(Number(result).toFixed(0), 10);
-  return roundedResult < bucketSpan ? bucketSpan : roundedResult;
-};
 
 // This is needed due to the flex-basis: 100% !important; rule that
 // kicks in on small screens via media queries breaking when using direction="column"

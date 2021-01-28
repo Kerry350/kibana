@@ -121,7 +121,6 @@ export class FilterManager {
     filters: Filter[] | Filter,
     pinFilterStatus: boolean = this.uiSettings.get(UI_SETTINGS.FILTERS_PINNED_BY_DEFAULT)
   ) {
-    console.log('hello add filters');
     if (!Array.isArray(filters)) {
       filters = [filters];
     }
