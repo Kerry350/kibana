@@ -34,10 +34,13 @@ const JOB_STATUS_POLLING_INTERVAL = 30000;
 export const LogEntryRatePageContent = memo(() => {
   const {
     hasFailedLoadingSource,
+    hasFailedResolvingSourceConfiguration,
     isLoading,
     isUninitialized,
     loadSource,
+    loadResolveLogSourceConfiguration,
     loadSourceFailureMessage,
+    resolveSourceFailureMessage,
   } = useLogSourceContext();
 
   const {
@@ -95,8 +98,19 @@ export const LogEntryRatePageContent = memo(() => {
 
   if (isLoading || isUninitialized) {
     return <SourceLoadingPage />;
-  } else if (hasFailedLoadingSource) {
-    return <SourceErrorPage errorMessage={loadSourceFailureMessage ?? ''} retry={loadSource} />;
+  } else if (hasFailedLoadingSource || hasFailedResolvingSourceConfiguration) {
+    return (
+      <SourceErrorPage
+        errorMessage={
+          loadSourceFailureMessage
+            ? loadSourceFailureMessage
+            : resolveSourceFailureMessage
+            ? resolveSourceFailureMessage
+            : ''
+        }
+        retry={hasFailedLoadingSource ? loadSource : loadResolveLogSourceConfiguration}
+      />
+    );
   } else if (!hasLogAnalysisCapabilites) {
     return <SubscriptionSplashContent />;
   } else if (!hasLogAnalysisReadCapabilities) {

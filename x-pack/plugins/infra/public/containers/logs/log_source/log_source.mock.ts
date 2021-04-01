@@ -60,7 +60,10 @@ export const createBasicSourceConfiguration = (sourceId: string): LogSourceConfi
   origin: 'stored',
   configuration: {
     description: `description for ${sourceId}`,
-    logAlias: 'LOG_INDICES',
+    logIndices: {
+      type: 'indexPattern',
+      indexPatternId: 'some-id',
+    },
     logColumns: [],
     fields: {
       container: 'CONTAINER_FIELD',
@@ -68,12 +71,12 @@ export const createBasicSourceConfiguration = (sourceId: string): LogSourceConfi
       pod: 'POD_FIELD',
       tiebreaker: 'TIEBREAKER_FIELD',
       timestamp: 'TIMESTAMP_FIELD',
+      message: ['MESSAGE_FIELD'],
     },
     name: sourceId,
   },
 });
 
 export const createAvailableSourceStatus = (logIndexFields = []): LogSourceStatus => ({
-  logIndexFields,
   logIndexStatus: 'available',
 });

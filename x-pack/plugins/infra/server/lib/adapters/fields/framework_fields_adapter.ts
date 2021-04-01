@@ -20,7 +20,9 @@ export class FrameworkFieldsAdapter implements FieldsAdapter {
     requestContext: InfraPluginRequestHandlerContext,
     indices: string
   ): Promise<IndexFieldDescriptor[]> {
-    const indexPatternsService = this.framework.getIndexPatternsService(requestContext);
+    const indexPatternsService = await this.framework.getIndexPatternsServiceWithRequestContext(
+      requestContext
+    );
     const response = await indexPatternsService.getFieldsForWildcard({
       pattern: indices,
     });

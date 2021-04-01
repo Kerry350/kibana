@@ -30,10 +30,13 @@ import { LogEntryCategoriesSetupContent } from './page_setup_content';
 export const LogEntryCategoriesPageContent = () => {
   const {
     hasFailedLoadingSource,
+    hasFailedResolvingSourceConfiguration,
     isLoading,
     isUninitialized,
     loadSource,
+    loadResolveLogSourceConfiguration,
     loadSourceFailureMessage,
+    resolveSourceFailureMessage,
   } = useLogSourceContext();
 
   const {
@@ -57,8 +60,19 @@ export const LogEntryCategoriesPageContent = () => {
 
   if (isLoading || isUninitialized) {
     return <SourceLoadingPage />;
-  } else if (hasFailedLoadingSource) {
-    return <SourceErrorPage errorMessage={loadSourceFailureMessage ?? ''} retry={loadSource} />;
+  } else if (hasFailedLoadingSource || hasFailedResolvingSourceConfiguration) {
+    return (
+      <SourceErrorPage
+        errorMessage={
+          loadSourceFailureMessage
+            ? loadSourceFailureMessage
+            : resolveSourceFailureMessage
+            ? resolveSourceFailureMessage
+            : ''
+        }
+        retry={hasFailedLoadingSource ? loadSource : loadResolveLogSourceConfiguration}
+      />
+    );
   } else if (!hasLogAnalysisCapabilites) {
     return <SubscriptionSplashContent />;
   } else if (!hasLogAnalysisReadCapabilities) {

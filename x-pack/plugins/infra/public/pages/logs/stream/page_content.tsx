@@ -15,17 +15,29 @@ import { useLogSourceContext } from '../../../containers/logs/log_source';
 export const StreamPageContent: React.FunctionComponent = () => {
   const {
     hasFailedLoadingSource,
+    hasFailedResolvingSourceConfiguration,
     isLoading,
     isUninitialized,
     loadSource,
+    loadResolveLogSourceConfiguration,
     loadSourceFailureMessage,
+    resolveSourceFailureMessage,
     sourceStatus,
   } = useLogSourceContext();
 
   if (isLoading || isUninitialized) {
     return <SourceLoadingPage />;
-  } else if (hasFailedLoadingSource) {
-    return <SourceErrorPage errorMessage={loadSourceFailureMessage ?? ''} retry={loadSource} />;
+  } else if (hasFailedLoadingSource || hasFailedResolvingSourceConfiguration) {
+    return (
+      <SourceErrorPage
+        errorMessage={
+          hasFailedLoadingSource
+            ? loadSourceFailureMessage ?? ''
+            : resolveSourceFailureMessage ?? ''
+        }
+        retry={hasFailedLoadingSource ? loadSource : loadResolveLogSourceConfiguration}
+      />
+    );
   } else if (sourceStatus?.logIndexStatus !== 'missing') {
     return <LogsPageLogsContent />;
   } else {

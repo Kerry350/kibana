@@ -112,7 +112,10 @@ describe('Logs UI Observability Homepage Functions', () => {
       mockedCallFetchLogSourceConfigurationAPI.mockResolvedValue({
         data: {
           configuration: {
-            logAlias: 'filebeat-*',
+            logIndices: {
+              type: 'indexPattern',
+              indexPatternId: 'some-test-id',
+            },
             fields: { timestamp: '@timestamp', tiebreaker: '_doc' },
           },
         },
