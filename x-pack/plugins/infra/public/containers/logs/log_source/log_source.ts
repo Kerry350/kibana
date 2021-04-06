@@ -71,13 +71,6 @@ export const useLogSource = ({
     [sourceId, fetch]
   );
 
-  // When the source configuration changes, we should resolve (or re-resolve) it.
-  useEffect(() => {
-    if (sourceConfiguration && sourceConfiguration.configuration) {
-      loadResolveLogSourceConfiguration();
-    }
-  }, [sourceConfiguration, loadResolveLogSourceConfiguration]);
-
   const [updateSourceConfigurationRequest, updateSourceConfiguration] = useTrackedPromise(
     {
       cancelPreviousOn: 'resolution',
@@ -138,6 +131,13 @@ export const useLogSource = ({
     },
     [sourceConfiguration, indexPatternsService, fetch]
   );
+
+  // When the source configuration changes, we should resolve (or re-resolve) it.
+  useEffect(() => {
+    if (sourceConfiguration && sourceConfiguration.configuration) {
+      loadResolveLogSourceConfiguration();
+    }
+  }, [sourceConfiguration, loadResolveLogSourceConfiguration]);
 
   const derivedIndexPattern = useMemo(
     () => ({

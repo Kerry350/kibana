@@ -12,6 +12,8 @@ import {
 import { IndexPatternsContract, IndexPattern } from '../../../../../src/plugins/data/common';
 
 export interface ResolvedLogSourceConfiguration {
+  name: string;
+  description: string;
   indexPattern: string;
   timestampField: string;
   tiebreakerField: string;
@@ -39,7 +41,7 @@ const resolveLegacyReference = async (
     throw new Error('This function can only resolve legacy references');
   }
 
-  const fields = indexPatternsService.getFieldsForWildcard({
+  const fields = await indexPatternsService.getFieldsForWildcard({
     pattern: sourceConfiguration.logIndices.indexName,
   });
 
@@ -50,6 +52,8 @@ const resolveLegacyReference = async (
     messageField: sourceConfiguration.fields.message,
     fields,
     columns: sourceConfiguration.logColumns,
+    name: sourceConfiguration.name,
+    description: sourceConfiguration.description,
   };
 };
 
@@ -72,5 +76,7 @@ const resolveKibanaIndexPatternReference = async (
     messageField: sourceConfiguration.fields.message,
     fields: indexPattern.fields,
     columns: sourceConfiguration.logColumns,
+    name: sourceConfiguration.name,
+    description: sourceConfiguration.description,
   };
 };

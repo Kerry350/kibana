@@ -8,10 +8,10 @@
 import { SavedObjectMigrationFn } from 'src/core/server';
 import { InfraSourceConfiguration } from '../../../../common/source_configuration/source_configuration';
 
-export const addNewIndexingStrategyIndexNames: SavedObjectMigrationFn<
-  InfraSourceConfiguration,
-  InfraSourceConfiguration
-> = (sourceConfigurationDocument) => {
+// TODO: Create new types for the old configuration values, remove any!
+export const addNewIndexingStrategyIndexNames: SavedObjectMigrationFn<any, any> = (
+  sourceConfigurationDocument
+) => {
   const oldLogAliasSegments = sourceConfigurationDocument.attributes.logAlias.split(',');
   const oldMetricAliasSegments = sourceConfigurationDocument.attributes.metricAlias.split(',');
 

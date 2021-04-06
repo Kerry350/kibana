@@ -169,7 +169,7 @@ export const Editor: React.FC<
 > = (props) => {
   const { setAlertParams, alertParams, errors } = props;
   const [hasSetDefaults, setHasSetDefaults] = useState<boolean>(false);
-  const { sourceId, sourceStatus, resolvedSourceConfiguration } = useLogSourceContext();
+  const { sourceId, resolvedSourceConfiguration } = useLogSourceContext();
 
   const {
     criteria: criteriaErrors,
