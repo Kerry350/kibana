@@ -145,7 +145,6 @@ export class InfraLogEntriesDomain {
       configuration,
       await this.libs.framework.getIndexPatternsServiceWithRequestContext(requestContext)
     );
-
     const columnDefinitions = columnOverrides ?? configuration.logColumns;
 
     const messageFormattingRules = compileFormattingRules(
@@ -207,9 +206,13 @@ export class InfraLogEntriesDomain {
       requestContext.core.savedObjects.client,
       sourceId
     );
+    const resolvedLogSourceConfiguration = await resolveLogSourceConfiguration(
+      configuration,
+      await this.libs.framework.getIndexPatternsServiceWithRequestContext(requestContext)
+    );
     const dateRangeBuckets = await this.adapter.getContainedLogSummaryBuckets(
       requestContext,
-      configuration,
+      resolvedLogSourceConfiguration,
       start,
       end,
       bucketSize,
@@ -231,6 +234,10 @@ export class InfraLogEntriesDomain {
       requestContext.core.savedObjects.client,
       sourceId
     );
+    const resolvedLogSourceConfiguration = await resolveLogSourceConfiguration(
+      configuration,
+      await this.libs.framework.getIndexPatternsServiceWithRequestContext(requestContext)
+    );
     const messageFormattingRules = compileFormattingRules(
       getBuiltinRules(configuration.fields.message)
     );
@@ -248,7 +255,7 @@ export class InfraLogEntriesDomain {
           : highlightQuery;
         const summaryBuckets = await this.adapter.getContainedLogSummaryBuckets(
           requestContext,
-          configuration,
+          resolvedLogSourceConfiguration,
           startTimestamp,
           endTimestamp,
           bucketSize,

@@ -7,7 +7,6 @@
 
 import { i18n } from '@kbn/i18n';
 import type { InfraPluginRequestHandlerContext } from '../../../types';
-import { InfraSource } from '../../sources';
 import { KibanaFramework } from '../../adapters/framework/kibana_framework_adapter';
 import {
   GetLogAlertsChartPreviewDataAlertParamsSubset,

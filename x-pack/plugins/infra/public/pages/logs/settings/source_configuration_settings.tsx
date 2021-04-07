@@ -36,7 +36,6 @@ export const LogsSettingsPage = () => {
 
   const {
     sourceConfiguration: source,
-    sourceStatus,
     isLoading,
     isUninitialized,
     updateSourceConfiguration,

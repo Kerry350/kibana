@@ -20,19 +20,24 @@ export const createUninitializedUseLogSourceMock: CreateUseLogSource = ({
   },
   hasFailedLoadingSource: false,
   hasFailedLoadingSourceStatus: false,
+  hasFailedResolvingSourceConfiguration: false,
   initialize: jest.fn(),
   isLoading: false,
   isLoadingSourceConfiguration: false,
   isLoadingSourceStatus: false,
+  isResolvingSourceConfiguration: false,
   isUninitialized: true,
   loadSource: jest.fn(),
   loadSourceConfiguration: jest.fn(),
   loadSourceFailureMessage: undefined,
+  resolveSourceFailureMessage: undefined,
   loadSourceStatus: jest.fn(),
   sourceConfiguration: undefined,
   sourceId,
   sourceStatus: undefined,
   updateSourceConfiguration: jest.fn(),
+  resolvedSourceConfiguration: undefined,
+  loadResolveLogSourceConfiguration: jest.fn(),
 });
 
 export const createLoadingUseLogSourceMock: CreateUseLogSource = ({
@@ -42,6 +47,7 @@ export const createLoadingUseLogSourceMock: CreateUseLogSource = ({
   isLoading: true,
   isLoadingSourceConfiguration: true,
   isLoadingSourceStatus: true,
+  isResolvingSourceConfiguration: true,
 });
 
 export const createLoadedUseLogSourceMock: CreateUseLogSource = ({
