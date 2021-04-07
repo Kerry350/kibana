@@ -206,7 +206,7 @@ export class InfraSources {
             default: StaticSourceConfigurationRuntimeType,
           }),
         })
-        .decode(this.libs.config),
+        .decode(this.libs.config), // TODO: Create a new specific config file runtime type here
       map(({ sources: { default: defaultConfiguration } }) => defaultConfiguration),
       fold(constant({}), identity)
     );

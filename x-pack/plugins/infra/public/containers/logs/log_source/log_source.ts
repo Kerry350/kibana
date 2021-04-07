@@ -75,14 +75,24 @@ export const useLogSource = ({
     {
       cancelPreviousOn: 'resolution',
       createPromise: async (patchedProperties: LogSourceConfigurationPropertiesPatch) => {
-        return await callPatchLogSourceConfigurationAPI(sourceId, patchedProperties, fetch);
+        const { data: updatedSourceConfig } = await callPatchLogSourceConfigurationAPI(
+          sourceId,
+          patchedProperties,
+          fetch
+        );
+        const resolvedSourceConfig = await resolveLogSourceConfiguration(
+          updatedSourceConfig.configuration,
+          indexPatternsService
+        );
+        return { updatedSourceConfig, resolvedSourceConfig };
       },
-      onResolve: ({ data }) => {
+      onResolve: ({ updatedSourceConfig, resolvedSourceConfig }) => {
         if (!getIsMounted()) {
           return;
         }
 
-        setSourceConfiguration(data);
+        setSourceConfiguration(updatedSourceConfig);
+        setResolvedSourceConfiguration(resolvedSourceConfig);
         loadSourceStatus();
       },
     },
@@ -248,12 +258,12 @@ export const useLogSource = ({
     // Source status (denotes the state of the indices, e.g. missing)
     sourceStatus,
     loadSourceStatus,
-    // Source configuration (represents the raw attributes of the source configuration, you would use this to read / update the raw values)
+    // Source configuration (represents the raw attributes of the source configuration)
     loadSource,
     loadSourceConfiguration,
     sourceConfiguration,
     updateSourceConfiguration,
-    // Resolved source configuration (represents a fully resolved state, you would use this for reading values (unless, perhaps, reading values for editing))
+    // Resolved source configuration (represents a fully resolved state, you would use this for the vast majority of "read" scenarios)
     resolvedSourceConfiguration,
     loadResolveLogSourceConfiguration,
   };

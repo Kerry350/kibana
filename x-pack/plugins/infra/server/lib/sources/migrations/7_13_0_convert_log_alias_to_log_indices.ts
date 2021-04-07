@@ -7,13 +7,29 @@
 
 import { SavedObjectMigrationFn } from 'src/core/server';
 import { InfraSourceConfiguration } from '../../../../common/source_configuration/source_configuration';
+import { LOGS_INDEX_PATTERN } from '../../../../common/constants';
+
+type SevenTwelveZeroSourceConfig = Omit<InfraSourceConfiguration, 'logIndices'> & {
+  logAlias: string;
+};
 
 export const convertLogAliasToLogIndices: SavedObjectMigrationFn<
-  InfraSourceConfiguration,
+  SevenTwelveZeroSourceConfig,
   InfraSourceConfiguration
 > = (sourceConfigurationDocument) => {
-  // if (sourceConfigurationDocument.attributes.logAlias) {
-  // } else {
-  //   return;
-  // }
+  // Make logAlias optional here on the type to appease the delete operand later
+  const newAttributes: InfraSourceConfiguration & { logAlias?: string } = {
+    ...sourceConfigurationDocument.attributes,
+    logIndices: {
+      type: 'indexName',
+      indexName: sourceConfigurationDocument.attributes.logAlias ?? LOGS_INDEX_PATTERN,
+    },
+  };
+
+  delete newAttributes.logAlias;
+
+  return {
+    ...sourceConfigurationDocument,
+    attributes: newAttributes,
+  };
 };
