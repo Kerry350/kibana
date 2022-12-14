@@ -689,6 +689,7 @@
     "whatwg-fetch": "^3.0.0",
     "xml2js": "^0.4.22",
     "xstate": "^4.34.0",
+    "xstate-router": "^0.4.3",
     "xterm": "^5.0.0",
     "yauzl": "^2.10.0",
     "yazl": "^2.5.1"

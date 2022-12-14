@@ -20,8 +20,9 @@ import { LogEntryCategoriesPage } from './log_entry_categories';
 import { LogEntryRatePage } from './log_entry_rate';
 import { LogsSettingsPage } from './settings';
 import { StreamPage } from './stream';
+import { NotFoundPage } from '../404';
 
-export const LogsPageContent: React.FunctionComponent = () => {
+export const LogsPageContent: React.FunctionComponent = ({ routingService, routingState }) => {
   const uiCapabilities = useKibana().services.application?.capabilities;
   const { setHeaderActionMenu, theme$ } = useContext(HeaderActionMenuContext);
 
@@ -80,8 +81,14 @@ export const LogsPageContent: React.FunctionComponent = () => {
           </EuiHeaderLinks>
         </HeaderMenuPortal>
       )}
-
-      <Switch>
+      {routingState.matches('stream') ? (
+        <StreamPage routingService={routingService} />
+      ) : routingState.matches('anomalies') ? (
+        <LogEntryRatePage />
+      ) : (
+        <NotFoundPage />
+      )}
+      {/* <Switch>
         <Route path={streamTab.pathname} component={StreamPage} />
         <Route path={anomaliesTab.pathname} component={LogEntryRatePage} />
         <Route path={logCategoriesTab.pathname} component={LogEntryCategoriesPage} />
@@ -89,7 +96,7 @@ export const LogsPageContent: React.FunctionComponent = () => {
         <RedirectWithQueryParams from={'/analysis'} to={anomaliesTab.pathname} exact />
         <RedirectWithQueryParams from={'/log-rate'} to={anomaliesTab.pathname} exact />
         <RedirectWithQueryParams from={'/'} to={streamTab.pathname} exact />
-      </Switch>
+      </Switch> */}
     </>
   );
 };

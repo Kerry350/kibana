@@ -11,11 +11,14 @@ import { RouteComponentProps } from 'react-router-dom';
 import { LogsPageContent } from './page_content';
 import { LogsPageProviders } from './page_providers';
 
-export const LogsPage: React.FunctionComponent<RouteComponentProps> = () => {
+export const LogsPage: React.FunctionComponent<RouteComponentProps> = ({
+  routingService,
+  routingState,
+}) => {
   return (
     <EuiErrorBoundary>
       <LogsPageProviders>
-        <LogsPageContent />
+        <LogsPageContent routingService={routingService} routingState={routingState} />
       </LogsPageProviders>
     </EuiErrorBoundary>
   );
