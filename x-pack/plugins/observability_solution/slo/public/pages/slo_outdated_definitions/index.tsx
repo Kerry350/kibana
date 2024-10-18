@@ -29,20 +29,23 @@ export function SlosOutdatedDefinitions() {
   const { ObservabilityPageTemplate } = usePluginContext();
   const { hasAtLeast } = useLicense();
 
-  useBreadcrumbs([
-    {
-      href: basePath.prepend(paths.slos),
-      text: i18n.translate('xpack.slo.breadcrumbs.slosLinkText', {
-        defaultMessage: 'SLOs',
-      }),
-      deepLinkId: 'slo',
-    },
-    {
-      text: i18n.translate('xpack.slo.breadcrumbs.slosOutdatedDefinitions', {
-        defaultMessage: 'Outdated SLO Definitions',
-      }),
-    },
-  ]);
+  useBreadcrumbs(
+    [
+      {
+        href: basePath.prepend(paths.slos),
+        text: i18n.translate('xpack.slo.breadcrumbs.slosLinkText', {
+          defaultMessage: 'SLOs',
+        }),
+        deepLinkId: 'slo',
+      },
+      {
+        text: i18n.translate('xpack.slo.breadcrumbs.slosOutdatedDefinitions', {
+          defaultMessage: 'Outdated SLO Definitions',
+        }),
+      },
+    ],
+    { absoluteProjectStyleBreadcrumbs: true }
+  );
 
   const [search, setSearch] = useState<string>('');
   const [activePage, setActivePage] = useState<number>(0);

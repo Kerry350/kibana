@@ -5,9 +5,10 @@
  * 2.0.
  */
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ChromeBreadcrumb } from '@kbn/core/public';
 import { useBreadcrumbs, useLinkProps } from '@kbn/observability-shared-plugin/public';
+import useObservable from 'react-use/lib/useObservable';
 import { METRICS_APP } from '../../common/constants';
 import { metricsTitle } from '../translations';
 import { useKibanaContextForPlugin } from './use_kibana';
@@ -17,30 +18,31 @@ export const useMetricsBreadcrumbs = (
   options?: { deeperContextServerless: boolean }
 ) => {
   const {
-    services: { serverless },
+    services: {
+      serverless,
+      chrome: { getChromeStyle$ },
+    },
   } = useKibanaContextForPlugin();
   const appLinkProps = useLinkProps({ app: METRICS_APP });
+  const chromeStyle = useObservable(getChromeStyle$());
+  const isProjectStyle = serverless || chromeStyle === 'project';
 
-  const breadcrumbs = useMemo(
-    () => [
+  const breadcrumbs = useMemo(() => {
+    const baseBreadcrumbs = [
       {
         ...appLinkProps,
         text: metricsTitle,
       },
       ...extraCrumbs,
-    ],
-    [appLinkProps, extraCrumbs]
-  );
+    ];
 
-  useBreadcrumbs(breadcrumbs);
-
-  useEffect(() => {
-    // For deeper context breadcrumbs in serveless, the `serverless` plugin provides its own breadcrumb service.
-    // https://docs.elastic.dev/kibana-dev-docs/serverless-project-navigation#breadcrumbs
-    if (serverless && options?.deeperContextServerless) {
-      // The initial path is already set in the breadcrumbs
-      const [, ...serverlessBreadcrumbs] = breadcrumbs;
-      serverless.setBreadcrumbs(serverlessBreadcrumbs);
+    if (isProjectStyle && options?.deeperContextServerless) {
+      const [, ...projectStyleBreadcrumbs] = baseBreadcrumbs;
+      return projectStyleBreadcrumbs;
+    } else {
+      return baseBreadcrumbs;
     }
-  }, [breadcrumbs, options?.deeperContextServerless, serverless]);
+  }, [appLinkProps, extraCrumbs, isProjectStyle, options?.deeperContextServerless]);
+
+  useBreadcrumbs(breadcrumbs, { absoluteProjectStyleBreadcrumbs: true });
 };

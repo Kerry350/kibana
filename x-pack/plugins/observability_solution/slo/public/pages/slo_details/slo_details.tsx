@@ -105,7 +105,7 @@ export function SloDetailsPage() {
     }
   }, [onPageReady, slo, isLoading]);
 
-  useBreadcrumbs(getBreadcrumbs(basePath, slo));
+  useBreadcrumbs(getBreadcrumbs(basePath, slo), { absoluteProjectStyleBreadcrumbs: true });
 
   const isSloNotFound = !isLoading && slo === undefined;
   if (isSloNotFound) {

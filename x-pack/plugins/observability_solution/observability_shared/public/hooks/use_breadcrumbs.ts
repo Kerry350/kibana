@@ -11,6 +11,7 @@ import { MouseEvent, useEffect, useMemo } from 'react';
 import { useKibana } from '@kbn/kibana-react-plugin/public';
 import { ChromeBreadcrumbsAppendExtension } from '@kbn/core-chrome-browser';
 import type { ServerlessPluginStart } from '@kbn/serverless/public';
+import useObservable from 'react-use/lib/useObservable';
 import { useQueryParams } from './use_query_params';
 
 function addClickHandlers(
@@ -42,14 +43,23 @@ export const useBreadcrumbs = (
     app?: { id: string; label: string };
     breadcrumbsAppendExtension?: ChromeBreadcrumbsAppendExtension;
     serverless?: ServerlessPluginStart;
+    classicOnly?: boolean;
+    absoluteProjectStyleBreadcrumbs?: boolean;
   }
 ) => {
   const params = useQueryParams();
   const { app, breadcrumbsAppendExtension, serverless } = options ?? {};
+  const absolute = !!options?.absoluteProjectStyleBreadcrumbs ?? false;
+  const classicOnlyCrumbs = options?.classicOnly ?? false;
 
   const {
     services: {
-      chrome: { docTitle, setBreadcrumbs: chromeSetBreadcrumbs, setBreadcrumbsAppendExtension },
+      chrome: {
+        docTitle,
+        setBreadcrumbs: chromeSetBreadcrumbs,
+        setBreadcrumbsAppendExtension,
+        getChromeStyle$,
+      },
       application: { getUrlForApp, navigateToUrl },
     },
   } = useKibana<{
@@ -58,11 +68,24 @@ export const useBreadcrumbs = (
   }>();
   const setTitle = docTitle.change;
   const appPath = getUrlForApp(app?.id ?? 'observability-overview') ?? '';
+  const chromeStyle = useObservable(getChromeStyle$());
 
-  const setBreadcrumbs = useMemo(
-    () => serverless?.setBreadcrumbs ?? chromeSetBreadcrumbs,
-    [serverless, chromeSetBreadcrumbs]
-  );
+  const setBreadcrumbs = useMemo(() => {
+    return serverless?.setBreadcrumbs
+      ? serverless?.setBreadcrumbs
+      : (breadcrumbs: ChromeBreadcrumb[]) =>
+          chromeSetBreadcrumbs(
+            breadcrumbs,
+            classicOnlyCrumbs
+              ? undefined
+              : {
+                  project: {
+                    value: breadcrumbs,
+                    absolute,
+                  },
+                }
+          );
+  }, [serverless?.setBreadcrumbs, chromeSetBreadcrumbs, classicOnlyCrumbs, absolute]);
 
   useEffect(() => {
     if (breadcrumbsAppendExtension) {
@@ -76,7 +99,8 @@ export const useBreadcrumbs = (
   }, [breadcrumbsAppendExtension, setBreadcrumbsAppendExtension]);
 
   useEffect(() => {
-    const breadcrumbs = serverless
+    const isProjectStyle = serverless || chromeStyle === 'project';
+    const breadcrumbs = isProjectStyle
       ? extraCrumbs
       : [
           {
@@ -99,6 +123,7 @@ export const useBreadcrumbs = (
   }, [
     app?.label,
     appPath,
+    chromeStyle,
     extraCrumbs,
     navigateToUrl,
     params,

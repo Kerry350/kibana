@@ -19,14 +19,17 @@ export function SloSettingsPage() {
   } = useKibana().services;
   const { ObservabilityPageTemplate } = usePluginContext();
 
-  useBreadcrumbs([
-    {
-      href: basePath.prepend(paths.slosSettings),
-      text: i18n.translate('xpack.slo.breadcrumbs.slosSettingsText', {
-        defaultMessage: 'SLOs Settings',
-      }),
-    },
-  ]);
+  useBreadcrumbs(
+    [
+      {
+        href: basePath.prepend(paths.slosSettings),
+        text: i18n.translate('xpack.slo.breadcrumbs.slosSettingsText', {
+          defaultMessage: 'SLOs Settings',
+        }),
+      },
+    ],
+    { absoluteProjectStyleBreadcrumbs: true }
+  );
 
   return (
     <ObservabilityPageTemplate

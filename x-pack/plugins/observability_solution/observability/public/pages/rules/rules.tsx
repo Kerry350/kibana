@@ -50,20 +50,25 @@ export function RulesPage({ activeTab = RULES_TAB_NAME }: RulesPageProps) {
   const [addRuleFlyoutVisibility, setAddRuleFlyoutVisibility] = useState(false);
   const [stateRefresh, setRefresh] = useState(new Date());
 
-  useBreadcrumbs([
+  useBreadcrumbs(
+    [
+      {
+        text: i18n.translate('xpack.observability.breadcrumbs.alertsLinkText', {
+          defaultMessage: 'Alerts',
+        }),
+        href: http.basePath.prepend('/app/observability/alerts'),
+        deepLinkId: 'observability-overview:alerts',
+      },
+      {
+        text: i18n.translate('xpack.observability.breadcrumbs.rulesLinkText', {
+          defaultMessage: 'Rules',
+        }),
+      },
+    ],
     {
-      text: i18n.translate('xpack.observability.breadcrumbs.alertsLinkText', {
-        defaultMessage: 'Alerts',
-      }),
-      href: http.basePath.prepend('/app/observability/alerts'),
-      deepLinkId: 'observability-overview:alerts',
-    },
-    {
-      text: i18n.translate('xpack.observability.breadcrumbs.rulesLinkText', {
-        defaultMessage: 'Rules',
-      }),
-    },
-  ]);
+      absoluteProjectStyleBreadcrumbs: true,
+    }
+  );
 
   const filteredRuleTypes = useGetFilteredRuleTypes();
   const {

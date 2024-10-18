@@ -158,20 +158,25 @@ export function AlertDetails() {
     }
   }, [alertDetail, ruleTypeRegistry]);
 
-  useBreadcrumbs([
+  useBreadcrumbs(
+    [
+      {
+        href: http.basePath.prepend(paths.observability.alerts),
+        text: i18n.translate('xpack.observability.breadcrumbs.alertsLinkText', {
+          defaultMessage: 'Alerts',
+        }),
+        deepLinkId: 'observability-overview:alerts',
+      },
+      {
+        text: alertDetail
+          ? getPageTitle(alertDetail.formatted.fields[ALERT_RULE_CATEGORY])
+          : defaultBreadcrumb,
+      },
+    ],
     {
-      href: http.basePath.prepend(paths.observability.alerts),
-      text: i18n.translate('xpack.observability.breadcrumbs.alertsLinkText', {
-        defaultMessage: 'Alerts',
-      }),
-      deepLinkId: 'observability-overview:alerts',
-    },
-    {
-      text: alertDetail
-        ? getPageTitle(alertDetail.formatted.fields[ALERT_RULE_CATEGORY])
-        : defaultBreadcrumb,
-    },
-  ]);
+      absoluteProjectStyleBreadcrumbs: true,
+    }
+  );
 
   const onUntrackAlert = () => {
     setAlertStatus(ALERT_STATUS_UNTRACKED);

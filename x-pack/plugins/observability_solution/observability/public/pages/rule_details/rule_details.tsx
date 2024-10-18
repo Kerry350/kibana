@@ -72,24 +72,29 @@ export function RuleDetailsPage() {
     filterByRuleTypeIds: filteredRuleTypes,
   });
 
-  useBreadcrumbs([
+  useBreadcrumbs(
+    [
+      {
+        text: i18n.translate('xpack.observability.breadcrumbs.alertsLinkText', {
+          defaultMessage: 'Alerts',
+        }),
+        href: basePath.prepend(paths.observability.alerts),
+        deepLinkId: 'observability-overview:alerts',
+      },
+      {
+        href: basePath.prepend(paths.observability.rules),
+        text: i18n.translate('xpack.observability.breadcrumbs.rulesLinkText', {
+          defaultMessage: 'Rules',
+        }),
+      },
+      {
+        text: rule && rule.name,
+      },
+    ],
     {
-      text: i18n.translate('xpack.observability.breadcrumbs.alertsLinkText', {
-        defaultMessage: 'Alerts',
-      }),
-      href: basePath.prepend(paths.observability.alerts),
-      deepLinkId: 'observability-overview:alerts',
-    },
-    {
-      href: basePath.prepend(paths.observability.rules),
-      text: i18n.translate('xpack.observability.breadcrumbs.rulesLinkText', {
-        defaultMessage: 'Rules',
-      }),
-    },
-    {
-      text: rule && rule.name,
-    },
-  ]);
+      absoluteProjectStyleBreadcrumbs: true,
+    }
+  );
 
   const [activeTabId, setActiveTabId] = useState<TabId>(() => {
     const searchParams = new URLSearchParams(search);
