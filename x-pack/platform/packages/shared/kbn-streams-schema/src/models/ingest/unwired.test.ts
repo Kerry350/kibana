@@ -72,7 +72,7 @@ describe('UnwiredStream', () => {
             lifecycle: {
               inherit: {},
             },
-            processing: [],
+            processing: { steps: [] },
             unwired: {},
           },
         },

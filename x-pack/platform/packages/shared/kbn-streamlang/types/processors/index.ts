@@ -7,7 +7,7 @@
 
 import { z } from '@kbn/zod';
 import { NonEmptyString } from '@kbn/zod-helpers';
-import { createIsNarrowSchema } from '@kbn/streams-schema';
+import { createIsNarrowSchema } from '@kbn/zod-helpers';
 import {
   ElasticsearchProcessorType,
   elasticsearchProcessorTypes,

@@ -333,7 +333,9 @@ export class StreamsClient {
             description: '',
             ingest: {
               lifecycle: { inherit: {} },
-              processing: [],
+              processing: {
+                steps: [],
+              },
               wired: {
                 fields: {},
                 routing: [],
@@ -530,7 +532,9 @@ export class StreamsClient {
       description: '',
       ingest: {
         lifecycle: { inherit: {} },
-        processing: [],
+        processing: {
+          steps: [],
+        },
         unwired: {},
       },
     };
@@ -605,7 +609,7 @@ export class StreamsClient {
       description: '',
       ingest: {
         lifecycle: { inherit: {} },
-        processing: [],
+        processing: { steps: [] },
         unwired: {},
       },
     }));
